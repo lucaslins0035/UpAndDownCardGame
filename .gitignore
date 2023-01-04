@@ -10,6 +10,11 @@ UpAndDown/[Bb]uilds/
 UpAndDown/[Ll]ogs/
 UpAndDown/[Uu]ser[Ss]ettings/
 
+UpAndDown/Assets/TextMesh Pro/
+
+#ParrelSync clones
+*_clone_*
+
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
 UpAndDown/[Mm]emoryCaptures/
