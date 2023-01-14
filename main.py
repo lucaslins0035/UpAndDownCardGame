@@ -5,11 +5,18 @@ from kivy.metrics import dp
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
+from kivy.properties import StringProperty
 
 
 class PlayMenu(Screen):
-    def on_create_room(self):
-        self.manager.current = 'lobby'
+    warning_text = StringProperty("")
+
+    def on_create_room(self, name_input):
+        if name_input.text == "":
+            self.warning_text = "Please provide a name"
+        else:  
+            print("MY name is ", name_input.text)
+            self.manager.current = 'lobby'
 
     def on_enter_room():
         pass
@@ -41,9 +48,10 @@ class Lobby(Screen):
             players_grid.add_widget(self.players_list[-1])
 
         btns_box = BoxLayout(orientation="horizontal",
-                             size_hint=(1, None), size=(dp(100), dp(100)))
-        btns_box.add_widget(Button(text='Leave'))
-        btns_box.add_widget(Button(text='Play'))
+                             size_hint=(1, None), size=(dp(0), dp(60)),
+                             spacing=dp(25))
+        btns_box.add_widget(Button(text='Leave', size_hint=(0.6, 1)))
+        btns_box.add_widget(Button(text='Play', size_hint=(0.6, 1)))
 
         box_background.add_widget(title)
         box_background.add_widget(players_grid)

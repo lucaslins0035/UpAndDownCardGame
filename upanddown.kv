@@ -3,17 +3,33 @@
     AnchorLayout:
         BoxLayout:
             orientation: "vertical"
-            size_hint: 0.4, 0.4
+            size_hint: 0.4, 0.5
             spacing: dp(10)
             Label:
+                text: root.warning_text
+                font_size: 15
+                color: 1, 0, 0, 1
+                size_hint: 1, None
+                size: dp(100), dp(40)
+            Label:
                 text: "Write your name"
+                font_size: 30
+                size_hint: 1, None
+                size: dp(100), dp(40)
             TextInput:
+                id: name_input 
                 multiline: False
+                size_hint: 1, None
+                size: dp(100), dp(50)
             Button
                 text: "Criar sala"
-                on_press: root.on_create_room()
+                on_press: root.on_create_room(name_input)
+                size_hint: 1, None
+                size: dp(100), dp(50)
             Button
                 text: "Entrar em sala"
+                size_hint: 1, None
+                size: dp(100), dp(50)
 
 <Lobby>
     name: "lobby"
