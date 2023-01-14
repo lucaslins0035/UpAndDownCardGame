@@ -1,3 +1,5 @@
+import threading
+
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.label import Label
@@ -7,6 +9,15 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.properties import StringProperty
 
+from gameServer import GameServer
+from gameclient import GameClient
+
+game_server = GameServer('127.0.0.1', 7777)
+game_client = GameClient('127.0.0.1', 7777)
+
+server_thread = threading.Thread(target=game_server.run)
+client_thread = threading.Thread(target=game_client.run)
+
 
 class PlayMenu(Screen):
     warning_text = StringProperty("")
@@ -14,8 +25,10 @@ class PlayMenu(Screen):
     def on_create_room(self, name_input):
         if name_input.text == "":
             self.warning_text = "Please provide a name"
-        else:  
+        else:
             print("MY name is ", name_input.text)
+            server_thread.start()
+            client_thread.start()
             self.manager.current = 'lobby'
 
     def on_enter_room():
@@ -69,4 +82,13 @@ class UpAndDownApp(App):
         return sm
 
 
-UpAndDownApp().run()
+try:
+    UpAndDownApp().run()
+except:
+    if server_thread.is_alive():
+        game_server.close_server = True
+        server_thread.join()
+    if client_thread.is_alive():
+        game_client.close_client = True
+        client_thread.join()
+        
