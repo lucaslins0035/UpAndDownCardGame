@@ -14,7 +14,7 @@ from gameclient import GameClient
 
 game_server = GameServer('127.0.0.1', 7777)
 game_client = GameClient('127.0.0.1', 7777)
-
+# TODO make them daemon threads?
 server_thread = threading.Thread(target=game_server.run)
 client_thread = threading.Thread(target=game_client.run)
 
@@ -26,9 +26,12 @@ class PlayMenu(Screen):
         if name_input.text == "":
             self.warning_text = "Please provide a name"
         else:
-            print("MY name is ", name_input.text)
+            print("My name is ", name_input.text)
             server_thread.start()
+
+            game_client.set_name(name_input.text)
             client_thread.start()
+
             self.manager.current = 'lobby'
 
     def on_enter_room():
@@ -91,4 +94,3 @@ except:
     if client_thread.is_alive():
         game_client.close_client = True
         client_thread.join()
-        

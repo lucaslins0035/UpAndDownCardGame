@@ -15,5 +15,8 @@ buildozer.spec
 *.unitypackage
 *.app
 
+#Runs
+__pycache__/
+
 #Scrap code
 testings/
