@@ -71,6 +71,8 @@ class GameClient():
                             f"{traceback.format_exc()}"
                         )
                         message.close()
+                    if mask == selectors.EVENT_READ:
+                        time.sleep(1)
                 # Check for a socket being monitored to continue.
                 if not self.sel.get_map():
                     break
@@ -84,8 +86,6 @@ class GameClient():
         self.name = name
 
 
-# def test_callback(server, message):
-#     print("Client got: " + message.read_msg)
 import time
 def update_status(client, message, game_state):
     if game_state == LOBBY:
