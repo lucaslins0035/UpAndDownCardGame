@@ -7,24 +7,28 @@ from kivy.metrics import dp
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, Clock
 
 from gameServer import GameServer
 from gameclient import GameClient
-
-game_server = GameServer('127.0.0.1', 7777)
-game_client = GameClient('127.0.0.1', 7777)
-# TODO make them daemon threads?
-server_thread = threading.Thread(target=game_server.run)
-client_thread = threading.Thread(target=game_client.run)
 
 
 class PlayMenu(Screen):
     warning_text = StringProperty("")
 
     def on_create_room(self, name_input):
+        global game_server
+        game_server = GameServer('127.0.0.1', 7777)
+
+        global game_client
+        game_client = GameClient('127.0.0.1', 7777)
+
+        # TODO make them daemon threads?
         global server_thread
+        server_thread = threading.Thread(target=game_server.run)
+
         global client_thread
+        client_thread = threading.Thread(target=game_client.run)
 
         if name_input.text == "":
             self.warning_text = "Please provide a name"
@@ -32,17 +36,24 @@ class PlayMenu(Screen):
             print("My name is ", name_input.text)
 
             server_thread.start()
-            server_thread.join(0.5)
+            server_thread.join(0.2)
+            print("ST" + str(server_thread.is_alive()))
 
             if server_thread.is_alive():
                 game_client.set_name(name_input.text)
                 client_thread.start()
-                self.manager.current = 'lobby'
+                move_through_lobby(self, 'in')
+                #self.manager.current = 'lobby'
             else:
                 self.warning_text = "Address already in use"
-                server_thread = threading.Thread(target=game_server.run)
 
     def on_enter_room(self, name_input):
+        global game_client
+        game_client = GameClient('127.0.0.1', 7777)
+
+        global client_thread
+        client_thread = threading.Thread(target=game_client.run)
+
         if name_input.text == "":
             self.warning_text = "Please provide a name"
         else:
@@ -50,8 +61,13 @@ class PlayMenu(Screen):
 
             game_client.set_name(name_input.text)
             client_thread.start()
+            client_thread.join(0.2)
 
-            self.manager.current = 'lobby'
+            if client_thread.is_alive():
+                move_through_lobby(self, 'in')
+                #self.manager.current = 'lobby'
+            else:
+                self.warning_text = "There is no server running with this address"
 
 
 class Lobby(Screen):
@@ -91,8 +107,8 @@ class Lobby(Screen):
 
         self.add_widget(box_background)
 
-        def update_players_list(self):
-            pass
+    def update_players_list(self):
+        pass
 
 
 class UpAndDownApp(App):
@@ -102,6 +118,29 @@ class UpAndDownApp(App):
         sm.add_widget(PlayMenu(name="play_menu"))
         sm.add_widget(Lobby(name="lobby"))
         return sm
+
+
+def move_through_lobby(screen, action):
+    global check_server_life_event
+    if action == "in":
+        check_server_life_event = Clock.schedule_interval(
+            lambda dt: check_server_life(screen), 1)
+        screen.manager.current = 'lobby'
+    elif action == 'out':
+        check_server_life_event.cancel()
+
+
+def check_server_life(screen):
+    global server_thread
+    global client_thread
+
+    client_thread.join(0.1)
+
+    if not client_thread.is_alive() and screen.manager.current == 'lobby':
+        game_client.close_client = True
+        client_thread.join()
+        move_through_lobby(screen, 'out')
+        screen.manager.current = 'play_menu'
 
 
 try:

@@ -34,9 +34,8 @@ class Message:
             # Should be ready to read
             data = self.sock.recv(4096)
             #print(f"Read {data} from {self.addr}")
-        except BlockingIOError:
-            # Resource temporarily unavailable (errno EWOULDBLOCK)
-            pass
+        except:
+            self.close()
         else:
             if data:
                 self._recv_buffer += data

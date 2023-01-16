@@ -68,14 +68,15 @@ class GameServer():
                                 "SERVER: state at game mode")
                         try:
                             message.process_events(mask)
-                            if message.sock is None:
-                                self.lobby_status.remove_player(str(message.addr))
                         except Exception:
                             print(
                                 f"Main: Error: Exception for {message.addr}:\n"
                                 f"{traceback.format_exc()}"
                             )
                             message.close()
+                        else:
+                            if message.sock is None:
+                                self.lobby_status.remove_player(str(message.addr))
             print("Shutting down Server")
         except KeyboardInterrupt:
             print("Caught keyboard interrupt, exiting")

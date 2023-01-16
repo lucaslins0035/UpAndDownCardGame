@@ -23,14 +23,14 @@
                 size: dp(100), dp(50)
             Button
                 text: "Criar sala"
-                on_press: root.on_create_room(name_input)
+                on_release: root.on_create_room(name_input)
                 size_hint: 1, None
                 size: dp(100), dp(50)
             Button
                 text: "Entrar em sala"
                 size_hint: 1, None
                 size: dp(100), dp(50)
-                on_press: root.on_enter_room(name_input)
+                on_release: root.on_enter_room(name_input)
 
 <Lobby>
     name: "lobby"

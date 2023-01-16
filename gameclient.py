@@ -26,12 +26,15 @@ class GameClient():
         self.lobby_client_state = LobbyPlayerStatus()
         self.lobby_status = LobbyStatus()
 
-        self.client_sock.setblocking(False)
 
     def run(self):
         self.lobby_client_state.name = self.name
         events = selectors.EVENT_WRITE  # Client always writes first
-        self.client_sock.connect_ex((self.server_ip, self.server_port))
+        connection_error = self.client_sock.connect_ex((self.server_ip, self.server_port))
+        if connection_error:
+            print("Connection error" + str(connection_error))
+            return
+        self.client_sock.setblocking(False)
         message = Message(self.sel, self.client_sock,
                           (self.server_ip, self.server_port))
         message.set_write_msg_payload(self.lobby_client_state)
@@ -56,8 +59,12 @@ class GameClient():
                             f"{traceback.format_exc()}"
                         )
                         message.close()
-                    if mask == selectors.EVENT_READ:
-                        time.sleep(1)
+                    else:
+                        if message.sock is None:
+                            break
+                        else: 
+                            if mask == selectors.EVENT_READ:
+                                time.sleep(1)
                 # Check for a socket being monitored to continue.
                 if not self.sel.get_map():
                     break
