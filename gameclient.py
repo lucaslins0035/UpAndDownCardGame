@@ -6,10 +6,7 @@ from functools import partial
 
 from network_msg_types import LobbyStatus, LobbyPlayerStatus
 from network_msg import Message
-
-# Games states
-LOBBY = 1
-GAME = 2
+from namings import *
 
 
 class GameClient():
@@ -25,14 +22,14 @@ class GameClient():
         self.name = ""
         self.lobby_client_state = LobbyPlayerStatus()
         self.lobby_status = LobbyStatus()
-
+        self.type = None
 
     def run(self):
         self.lobby_client_state.name = self.name
         events = selectors.EVENT_WRITE  # Client always writes first
-        connection_error = self.client_sock.connect_ex((self.server_ip, self.server_port))
+        connection_error = self.client_sock.connect_ex(
+            (self.server_ip, self.server_port))
         if connection_error:
-            print("Connection error" + str(connection_error))
             return
         self.client_sock.setblocking(False)
         message = Message(self.sel, self.client_sock,
@@ -62,7 +59,7 @@ class GameClient():
                     else:
                         if message.sock is None:
                             break
-                        else: 
+                        else:
                             if mask == selectors.EVENT_READ:
                                 time.sleep(1)
                 # Check for a socket being monitored to continue.
@@ -72,10 +69,10 @@ class GameClient():
         except KeyboardInterrupt:
             print("Caught keyboard interrupt, exiting")
         finally:
-            events = self.sel.select(timeout=1)
-            for key, mask in events:
-                key.data.close()
-
+            for sel_key in self.sel.get_map().values():
+                sel_key.fileobj.close()
+            self.sel.close()
+            
     def set_name(self, name):
         self.name = name
 

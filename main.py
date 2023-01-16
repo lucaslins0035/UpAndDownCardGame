@@ -7,10 +7,14 @@ from kivy.metrics import dp
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
-from kivy.properties import StringProperty, Clock
+from kivy.properties import StringProperty, Clock, ListProperty
 
 from gameServer import GameServer
 from gameclient import GameClient
+from namings import *
+
+game_server = GameServer('127.0.0.1', 7777)
+game_client = GameClient('127.0.0.1', 7777)
 
 
 class PlayMenu(Screen):
@@ -22,6 +26,7 @@ class PlayMenu(Screen):
 
         global game_client
         game_client = GameClient('127.0.0.1', 7777)
+        game_client.type = HOST
 
         # TODO make them daemon threads?
         global server_thread
@@ -37,7 +42,6 @@ class PlayMenu(Screen):
 
             server_thread.start()
             server_thread.join(0.2)
-            print("ST" + str(server_thread.is_alive()))
 
             if server_thread.is_alive():
                 game_client.set_name(name_input.text)
@@ -50,6 +54,7 @@ class PlayMenu(Screen):
     def on_enter_room(self, name_input):
         global game_client
         game_client = GameClient('127.0.0.1', 7777)
+        game_client.type = CLIENT
 
         global client_thread
         client_thread = threading.Thread(target=game_client.run, daemon=True)
@@ -98,8 +103,16 @@ class Lobby(Screen):
         btns_box = BoxLayout(orientation="horizontal",
                              size_hint=(1, None), size=(dp(0), dp(60)),
                              spacing=dp(25))
-        btns_box.add_widget(Button(text='Leave', size_hint=(0.6, 1)))
-        btns_box.add_widget(Button(text='Play', size_hint=(0.6, 1)))
+
+        leave_btn = Button(text='Leave',
+                           size_hint=(0.6, 1))
+        leave_btn.bind(on_release=self.on_leave_btn)
+
+        play_btn = Button(text='Play',
+                          size_hint=(0.6, 1))
+
+        btns_box.add_widget(leave_btn)
+        btns_box.add_widget(play_btn)
 
         box_background.add_widget(title)
         box_background.add_widget(players_grid)
@@ -107,8 +120,21 @@ class Lobby(Screen):
 
         self.add_widget(box_background)
 
-    def update_players_list(self):
-        pass
+    def on_leave_btn(self, instance):
+        global game_client
+        global game_server
+        global server_thread
+        global client_thread
+        if game_client.type == HOST:
+            game_server.close_server = True
+            game_client.close_client = True
+            server_thread.join()
+            client_thread.join()
+        else:
+            game_client.close_client = True
+            client_thread.join()
+        move_through_lobby(self, 'out')
+        self.manager.current = 'play_menu'
 
 
 class UpAndDownApp(App):
@@ -143,6 +169,7 @@ def check_server_life(screen):
         screen.manager.current = 'play_menu'
 
 
+# Main
 try:
     UpAndDownApp().run()
 except:
