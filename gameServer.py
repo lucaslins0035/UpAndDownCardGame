@@ -72,7 +72,10 @@ class GameServer():
     #             print("GAME state write not implemented yet")
 
     def run(self):
-        self.server_sock.bind((self.server_ip, self.server_port))
+        try:
+            self.server_sock.bind((self.server_ip, self.server_port))
+        except:
+            return
         self.server_sock.listen()
         print(f"Listening on {(self.server_ip, self.server_port)}")
         try:

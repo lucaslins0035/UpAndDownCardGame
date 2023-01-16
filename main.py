@@ -23,16 +23,24 @@ class PlayMenu(Screen):
     warning_text = StringProperty("")
 
     def on_create_room(self, name_input):
+        global server_thread
+        global client_thread
+
         if name_input.text == "":
             self.warning_text = "Please provide a name"
         else:
             print("My name is ", name_input.text)
+
             server_thread.start()
+            server_thread.join(0.5)
 
-            game_client.set_name(name_input.text)
-            client_thread.start()
-
-            self.manager.current = 'lobby'
+            if server_thread.is_alive():
+                game_client.set_name(name_input.text)
+                client_thread.start()
+                self.manager.current = 'lobby'
+            else:
+                self.warning_text = "Address already in use"
+                server_thread = threading.Thread(target=game_server.run)
 
     def on_enter_room(self, name_input):
         if name_input.text == "":
@@ -82,7 +90,7 @@ class Lobby(Screen):
         box_background.add_widget(btns_box)
 
         self.add_widget(box_background)
-        
+
         def update_players_list(self):
             pass
 
