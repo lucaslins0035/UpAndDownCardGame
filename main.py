@@ -25,10 +25,10 @@ class PlayMenu(Screen):
 
         # TODO make them daemon threads?
         global server_thread
-        server_thread = threading.Thread(target=game_server.run)
+        server_thread = threading.Thread(target=game_server.run, daemon=True)
 
         global client_thread
-        client_thread = threading.Thread(target=game_client.run)
+        client_thread = threading.Thread(target=game_client.run, daemon=True)
 
         if name_input.text == "":
             self.warning_text = "Please provide a name"
@@ -52,7 +52,7 @@ class PlayMenu(Screen):
         game_client = GameClient('127.0.0.1', 7777)
 
         global client_thread
-        client_thread = threading.Thread(target=game_client.run)
+        client_thread = threading.Thread(target=game_client.run, daemon=True)
 
         if name_input.text == "":
             self.warning_text = "Please provide a name"
