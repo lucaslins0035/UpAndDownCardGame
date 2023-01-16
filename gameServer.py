@@ -1,3 +1,4 @@
+import time
 import socket
 import selectors
 import types
@@ -36,7 +37,6 @@ class GameServer():
             message.set_write_msg_payload("Hello from the Server!")
             message.deliver_read_msg_callback = partial(
                 update_status, server=self, message=message, game_state=self.game_state)
-            # data = types.SimpleNamespace(addr=addr, message=message)
             events = selectors.EVENT_READ   # Server always reads first
             self.sel.register(conn, events, data=message)
             self.clients += 1
@@ -45,31 +45,6 @@ class GameServer():
             print(msg)
             conn.send(msg.encode('utf-8'))
             conn.close()
-
-    # def process_comm(self, key, mask):
-    #     sock = key.fileobj
-    #     socket_data = key.data
-    #     if mask & selectors.EVENT_READ:
-    #         if self.game_state == LOBBY:
-    #             recv_data = pickle.loads(sock.recv(4096))
-    #             if isinstance(recv_data, LobbyPlayerStatus):
-    #                 print(f"Recv: {recv_data.name} from {socket_data.addr}")
-    #                 if recv_data.name not in self.lobby_status.players_list:
-    #                     self.lobby_status.add_player(recv_data.name)
-    #             else:
-    #                 if socket_data.name in self.lobby_status.players_list:
-    #                     self.lobby_status.remove_player(socket_data.name)
-    #                 print(
-    #                     f"Closing connection to {socket_data.name} in {socket_data.addr}")
-    #                 self.sel.unregister(sock)
-    #                 sock.close()
-    #         else:
-    #             print("GAME state read not implemented yet")
-    #     if mask & selectors.EVENT_WRITE:
-    #         if self.game_state == LOBBY:
-    #             sock.send(pickle.dumps(self.lobby_status))
-    #         else:
-    #             print("GAME state write not implemented yet")
 
     def run(self):
         try:
@@ -93,6 +68,8 @@ class GameServer():
                                 "SERVER: state at game mode")
                         try:
                             message.process_events(mask)
+                            if message.sock is None:
+                                self.lobby_status.remove_player(str(message.addr))
                         except Exception:
                             print(
                                 f"Main: Error: Exception for {message.addr}:\n"
@@ -103,17 +80,20 @@ class GameServer():
         except KeyboardInterrupt:
             print("Caught keyboard interrupt, exiting")
         finally:
-            self.sel.close()
+            events = self.sel.select(timeout=1)
+            for key, mask in events:
+                key.data.close()
 
 # def test_callback(server, message):
 #     print("Server got: " + message.read_msg)
 
-import time
+
 def update_status(server, message, game_state):
     if game_state == LOBBY:
-        if message.read_msg.name not in server.lobby_status.players_list:
-            server.lobby_status.add_player(message.read_msg.name)
-            print(str(time.time()) + " - Server got: " + str(message.read_msg.name))
+        if str(message.addr) not in server.lobby_status.players_reg.keys():
+            server.lobby_status.add_player(message.read_msg.name, str(message.addr))
+            print(str(time.time()) + " - Server got: " +
+                  str(message.read_msg.name))
         elif message.read_msg.name == '':
             pass
     else:

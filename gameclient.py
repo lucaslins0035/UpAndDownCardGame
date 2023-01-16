@@ -1,3 +1,4 @@
+import time
 import socket
 import selectors
 import types
@@ -26,22 +27,6 @@ class GameClient():
         self.lobby_status = LobbyStatus()
 
         self.client_sock.setblocking(False)
-
-    # def process_comm(self, key, mask):
-    #     sock = key.fileobj
-    #     data = key.data
-    #     if mask & selectors.EVENT_READ:
-    #         if self.game_state == LOBBY:
-    #             recv_data = pickle.loads(sock.recv(1024))
-    #             if isinstance(recv_data, LobbyStatus):
-    #                 print(f"Received {recv_data.players_list}")
-    #             else:
-    #                 print(f"Closing connection")
-    #                 self.sel.unregister(sock)
-    #                 sock.close()
-    #     if mask & selectors.EVENT_WRITE:
-    #         if self.game_state == LOBBY:
-    #             sock.send(pickle.dumps(data.lobby_client_state))
 
     def run(self):
         self.lobby_client_state.name = self.name
@@ -80,16 +65,18 @@ class GameClient():
         except KeyboardInterrupt:
             print("Caught keyboard interrupt, exiting")
         finally:
-            self.sel.close()
+            events = self.sel.select(timeout=1)
+            for key, mask in events:
+                key.data.close()
 
     def set_name(self, name):
         self.name = name
 
 
-import time
 def update_status(client, message, game_state):
     if game_state == LOBBY:
         client.lobby_status = message.read_msg
-        print(str(time.time()) + " - Client got: " + str(client.lobby_status.players_list))
+        print(str(time.time()) + " - Client got: " +
+              str(client.lobby_status.players_list))
     else:
         print("GAME: Client got: " + message.read_msg)
