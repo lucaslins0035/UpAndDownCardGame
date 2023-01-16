@@ -46,8 +46,7 @@ class PlayMenu(Screen):
             if server_thread.is_alive():
                 game_client.set_name(name_input.text)
                 client_thread.start()
-                move_through_lobby(self, 'in')
-                #self.manager.current = 'lobby'
+                self.manager.current = 'lobby'
             else:
                 self.warning_text = "Address already in use"
 
@@ -69,8 +68,7 @@ class PlayMenu(Screen):
             client_thread.join(0.2)
 
             if client_thread.is_alive():
-                move_through_lobby(self, 'in')
-                #self.manager.current = 'lobby'
+                self.manager.current = 'lobby'
             else:
                 self.warning_text = "There is no server running with this address"
 
@@ -104,21 +102,56 @@ class Lobby(Screen):
                              size_hint=(1, None), size=(dp(0), dp(60)),
                              spacing=dp(25))
 
-        leave_btn = Button(text='Leave',
-                           size_hint=(0.6, 1))
-        leave_btn.bind(on_release=self.on_leave_btn)
+        self.leave_btn = Button(text='Leave',
+                                size_hint=(0.6, 1))
+        self.leave_btn.bind(on_release=self.on_leave_btn)
 
-        play_btn = Button(text='Play',
-                          size_hint=(0.6, 1))
+        self.play_btn = Button(text='Play',
+                               size_hint=(0.6, 1))
 
-        btns_box.add_widget(leave_btn)
-        btns_box.add_widget(play_btn)
+        btns_box.add_widget(self.leave_btn)
+        btns_box.add_widget(self.play_btn)
 
         box_background.add_widget(title)
         box_background.add_widget(players_grid)
         box_background.add_widget(btns_box)
 
         self.add_widget(box_background)
+
+    def on_pre_enter(self, *args):
+        global game_client
+
+        super().on_pre_enter(*args)
+        Clock.schedule_once(lambda dt: self.update_lobby_list(), -1)
+
+        if game_client.type != HOST:
+            self.play_btn.disabled = True
+        else:
+            self.play_btn.disabled = False
+
+    def on_enter(self, *args):
+        super().on_enter(*args)
+        self.check_server_life_event = Clock.schedule_interval(
+            lambda dt: self.check_server_life(), 1)
+        self.update_lobby_list_event = Clock.schedule_interval(
+            lambda dt: self.update_lobby_list(), 1)
+
+    def on_leave(self, *args):
+        super().on_leave(*args)
+        self.check_server_life_event.cancel()
+        self.update_lobby_list_event.cancel()
+
+    def check_server_life(self):
+        global server_thread
+        global client_thread
+        print("Check server")
+
+        client_thread.join(0.1)
+
+        if not client_thread.is_alive() and self.manager.current == 'lobby':
+            game_client.close_client = True
+            client_thread.join()
+            self.manager.current = 'play_menu'
 
     def on_leave_btn(self, instance):
         global game_client
@@ -133,8 +166,19 @@ class Lobby(Screen):
         else:
             game_client.close_client = True
             client_thread.join()
-        move_through_lobby(self, 'out')
         self.manager.current = 'play_menu'
+
+    def update_lobby_list(self):
+        global game_client
+
+        num_players = len(game_client.lobby_status.players_list)
+        for i in range(num_players):
+            self.players_list[i].text = "{}: {}".format(
+                "H" if i == 0 else str(i+1), game_client.lobby_status.players_list[i])
+
+        for i in range(num_players, len(self.players_list)):
+            self.players_list[i].text = "{}: {}".format(
+                "H" if i == 0 else str(i+1), "")
 
 
 class UpAndDownApp(App):
@@ -144,29 +188,6 @@ class UpAndDownApp(App):
         sm.add_widget(PlayMenu(name="play_menu"))
         sm.add_widget(Lobby(name="lobby"))
         return sm
-
-
-def move_through_lobby(screen, action):
-    global check_server_life_event
-    if action == "in":
-        check_server_life_event = Clock.schedule_interval(
-            lambda dt: check_server_life(screen), 1)
-        screen.manager.current = 'lobby'
-    elif action == 'out':
-        check_server_life_event.cancel()
-
-
-def check_server_life(screen):
-    global server_thread
-    global client_thread
-
-    client_thread.join(0.1)
-
-    if not client_thread.is_alive() and screen.manager.current == 'lobby':
-        game_client.close_client = True
-        client_thread.join()
-        move_through_lobby(screen, 'out')
-        screen.manager.current = 'play_menu'
 
 
 # Main

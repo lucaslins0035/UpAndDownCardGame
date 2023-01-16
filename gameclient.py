@@ -61,7 +61,7 @@ class GameClient():
                             break
                         else:
                             if mask == selectors.EVENT_READ:
-                                time.sleep(1)
+                                time.sleep(0.25)
                 # Check for a socket being monitored to continue.
                 if not self.sel.get_map():
                     break
