@@ -16,7 +16,6 @@ class GameServer():
         self.server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_sock.setblocking(False)
         self.server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server_sock.bind((ip, port))
 
         self.sel = selectors.DefaultSelector()
         self.sel.register(self.server_sock, selectors.EVENT_READ, data=None)
@@ -36,7 +35,7 @@ class GameServer():
             message = Message(self.sel, conn, addr)
             message.set_write_msg_payload("Hello from the Server!")
             message.deliver_read_msg_callback = partial(
-                test_callback, server=self, message=message)
+                update_status, server=self, message=message, game_state=self.game_state)
             # data = types.SimpleNamespace(addr=addr, message=message)
             events = selectors.EVENT_READ   # Server always reads first
             self.sel.register(conn, events, data=message)
@@ -73,18 +72,22 @@ class GameServer():
     #             print("GAME state write not implemented yet")
 
     def run(self):
+        self.server_sock.bind((self.server_ip, self.server_port))
         self.server_sock.listen()
         print(f"Listening on {(self.server_ip, self.server_port)}")
         try:
             while not self.close_server:
-                events = self.sel.select(timeout=None)
+                events = self.sel.select(timeout=1)
                 for key, mask in events:
                     if key.data is None:
                         self.evaluate_connection(key.fileobj)
                     else:
                         message = key.data
-                        # if self.game_state == LOBBY:
-                        #     message.write_msg_processed = self.lobby_status
+                        if self.game_state == LOBBY:
+                            message.set_write_msg_payload(self.lobby_status)
+                        else:
+                            message.set_write_msg_payload(
+                                "SERVER: state at game mode")
                         try:
                             message.process_events(mask)
                         except Exception:
@@ -99,11 +102,16 @@ class GameServer():
         finally:
             self.sel.close()
 
-def test_callback(server, message):
-    print("Server got: " + message.read_msg)
+# def test_callback(server, message):
+#     print("Server got: " + message.read_msg)
 
-def update_lobby_status(server, message):
-    if message.read_msg.name not in server.lobby_status.players_list:
-        server.lobby_status.add_player(message.read_msg.name)
-    elif message.read_msg.name == '':
-        pass
+import time
+def update_status(server, message, game_state):
+    if game_state == LOBBY:
+        if message.read_msg.name not in server.lobby_status.players_list:
+            server.lobby_status.add_player(message.read_msg.name)
+            print(str(time.time()) + " - Server got: " + str(message.read_msg.name))
+        elif message.read_msg.name == '':
+            pass
+    else:
+        print("GAME: Server got: " + message.read_msg)

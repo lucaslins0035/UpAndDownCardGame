@@ -22,6 +22,8 @@ class GameClient():
         self.close_client = False
         self.game_state = LOBBY
         self.name = ""
+        self.lobby_client_state = LobbyPlayerStatus()
+        self.lobby_status = LobbyStatus()
 
         self.client_sock.setblocking(False)
 
@@ -39,23 +41,28 @@ class GameClient():
     #                 sock.close()
     #     if mask & selectors.EVENT_WRITE:
     #         if self.game_state == LOBBY:
-    #             sock.send(pickle.dumps(data.lobby_state))
+    #             sock.send(pickle.dumps(data.lobby_client_state))
 
     def run(self):
+        self.lobby_client_state.name = self.name
         events = selectors.EVENT_WRITE  # Client always writes first
         self.client_sock.connect_ex((self.server_ip, self.server_port))
         message = Message(self.sel, self.client_sock,
                           (self.server_ip, self.server_port))
-        # data = types.SimpleNamespace(message=message)
-        message.set_write_msg_payload("Hello from the Client!")
+        message.set_write_msg_payload(self.lobby_client_state)
         message.deliver_read_msg_callback = partial(
-            test_callback, server=self, message=message)
+            update_status, client=self, message=message, game_state=self.game_state)
         self.sel.register(self.client_sock, events, data=message)
         try:
             while not self.close_client:
-                events = self.sel.select(timeout=None)
+                events = self.sel.select(timeout=1)
                 for key, mask in events:
                     message = key.data
+                    if self.game_state == LOBBY:
+                        message.set_write_msg_payload(self.lobby_client_state)
+                    else:
+                        message.set_write_msg_payload(
+                            "CLIENT: to game mode")
                     try:
                         message.process_events(mask)
                     except Exception:
@@ -77,5 +84,12 @@ class GameClient():
         self.name = name
 
 
-def test_callback(server, message):
-    print("Client got: " + message.read_msg)
+# def test_callback(server, message):
+#     print("Client got: " + message.read_msg)
+import time
+def update_status(client, message, game_state):
+    if game_state == LOBBY:
+        client.lobby_status = message.read_msg
+        print(str(time.time()) + " - Client got: " + str(client.lobby_status.players_list))
+    else:
+        print("GAME: Client got: " + message.read_msg)

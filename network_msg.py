@@ -1,5 +1,6 @@
 import selectors
 import pickle
+import time
 
 
 class Message:
@@ -32,7 +33,7 @@ class Message:
         try:
             # Should be ready to read
             data = self.sock.recv(4096)
-            print(f"Read {data} from {self.addr}")
+            #print(f"Read {data} from {self.addr}")
         except BlockingIOError:
             # Resource temporarily unavailable (errno EWOULDBLOCK)
             pass
@@ -44,7 +45,7 @@ class Message:
 
     def _write(self):
         if self._send_buffer:
-            print(f"Sending {self._send_buffer!r} to {self.addr}")
+            #print(f"Sending {self._send_buffer!r} to {self.addr}")
             try:
                 # Should be ready to write
                 sent = self.sock.send(self._send_buffer)
@@ -117,10 +118,10 @@ class Message:
         data = self._recv_buffer[:self.header]
         self._recv_buffer = self._recv_buffer[self.header:]
         self.read_msg = pickle.loads(data)
-        print(
-            f"Received {self.header} bytes of "
-            f"read_msg from {self.addr}"
-        )
+        # print(
+        #     f"Received {self.header} bytes of "
+        #     f"read_msg from {self.addr}"
+        # )
 
     def create_header(self, value):
         header = bytearray(1)

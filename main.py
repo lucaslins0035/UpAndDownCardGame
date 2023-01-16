@@ -34,8 +34,16 @@ class PlayMenu(Screen):
 
             self.manager.current = 'lobby'
 
-    def on_enter_room():
-        pass
+    def on_enter_room(self, name_input):
+        if name_input.text == "":
+            self.warning_text = "Please provide a name"
+        else:
+            print("My name is ", name_input.text)
+
+            game_client.set_name(name_input.text)
+            client_thread.start()
+
+            self.manager.current = 'lobby'
 
 
 class Lobby(Screen):
@@ -74,6 +82,9 @@ class Lobby(Screen):
         box_background.add_widget(btns_box)
 
         self.add_widget(box_background)
+        
+        def update_players_list(self):
+            pass
 
 
 class UpAndDownApp(App):

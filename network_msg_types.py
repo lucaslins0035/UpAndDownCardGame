@@ -1,8 +1,8 @@
 import pickle
 
 class LobbyPlayerStatus():
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
+        self.name = ""
 
 class LobbyStatus():
     def __init__(self):
