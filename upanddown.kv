@@ -13,7 +13,7 @@
                 size: dp(100), dp(40)
             Label:
                 text: "Write your name"
-                font_size: 30
+                font_size: 20
                 size_hint: 1, None
                 size: dp(100), dp(40)
             TextInput:
@@ -21,16 +21,36 @@
                 multiline: False
                 size_hint: 1, None
                 size: dp(100), dp(50)
+            Label:
+                text: "Write the IP"
+                font_size: 20
+                size_hint: 1, None
+                size: dp(100), dp(40)
+            TextInput:
+                id: ip_input 
+                multiline: False
+                size_hint: 1, None
+                size: dp(100), dp(50)
+            Label:
+                text: "Write the port"
+                font_size: 20
+                size_hint: 1, None
+                size: dp(100), dp(40)
+            TextInput:
+                id: port_input 
+                multiline: False
+                size_hint: 1, None
+                size: dp(100), dp(50)
             Button
                 text: "Create new game"
-                on_release: root.on_create_room(name_input)
+                on_release: root.on_create_room(name_input, ip_input, port_input)
                 size_hint: 1, None
                 size: dp(100), dp(50)
             Button
                 text: "Join game"
                 size_hint: 1, None
                 size: dp(100), dp(50)
-                on_release: root.on_enter_room(name_input)
+                on_release: root.on_enter_room(name_input, ip_input, port_input)
 
 <Lobby>
     name: "lobby"

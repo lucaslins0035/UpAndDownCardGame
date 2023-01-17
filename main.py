@@ -20,12 +20,12 @@ game_client = GameClient('127.0.0.1', 7777)
 class PlayMenu(Screen):
     warning_text = StringProperty("")
 
-    def on_create_room(self, name_input):
+    def on_create_room(self, name_input, ip_input, port_input):
         global game_server
-        game_server = GameServer('127.0.0.1', 7777)
+        game_server = GameServer(ip_input.text, int(port_input.text))
 
         global game_client
-        game_client = GameClient('127.0.0.1', 7777)
+        game_client = GameClient(ip_input.text, int(port_input.text))
         game_client.type = HOST
 
         # TODO make them daemon threads?
@@ -50,9 +50,9 @@ class PlayMenu(Screen):
             else:
                 self.warning_text = "Address already in use"
 
-    def on_enter_room(self, name_input):
+    def on_enter_room(self, name_input, ip_input, port_input):
         global game_client
-        game_client = GameClient('127.0.0.1', 7777)
+        game_client = GameClient(ip_input.text, int(port_input.text))
         game_client.type = CLIENT
 
         global client_thread
