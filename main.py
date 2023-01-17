@@ -21,23 +21,27 @@ class PlayMenu(Screen):
     warning_text = StringProperty("")
 
     def on_create_room(self, name_input, ip_input, port_input):
-        global game_server
-        game_server = GameServer(ip_input.text, int(port_input.text))
-
-        global game_client
-        game_client = GameClient(ip_input.text, int(port_input.text))
-        game_client.type = HOST
-
-        global server_thread
-        server_thread = threading.Thread(target=game_server.run, daemon=True)
-
-        global client_thread
-        client_thread = threading.Thread(target=game_client.run, daemon=True)
-
         if name_input.text == "":
             self.warning_text = "Please provide a name"
+        elif ip_input.text == "":
+            self.warning_text = "Please provide IP address"
+        elif port_input.text == "":
+            self.warning_text = "Please provide port"
         else:
-            print("My name is ", name_input.text)
+            global game_server
+            game_server = GameServer(ip_input.text, int(port_input.text))
+
+            global game_client
+            game_client = GameClient(ip_input.text, int(port_input.text))
+            game_client.type = HOST
+
+            global server_thread
+            server_thread = threading.Thread(
+                target=game_server.run, daemon=True)
+
+            global client_thread
+            client_thread = threading.Thread(
+                target=game_client.run, daemon=True)
 
             server_thread.start()
             server_thread.join(0.2)
@@ -50,17 +54,20 @@ class PlayMenu(Screen):
                 self.warning_text = "Address already in use"
 
     def on_enter_room(self, name_input, ip_input, port_input):
-        global game_client
-        game_client = GameClient(ip_input.text, int(port_input.text))
-        game_client.type = CLIENT
-
-        global client_thread
-        client_thread = threading.Thread(target=game_client.run, daemon=True)
-
         if name_input.text == "":
             self.warning_text = "Please provide a name"
+        elif ip_input.text == "":
+            self.warning_text = "Please provide IP address"
+        elif port_input.text == "":
+            self.warning_text = "Please provide port"
         else:
-            print("My name is ", name_input.text)
+            global game_client
+            game_client = GameClient(ip_input.text, int(port_input.text))
+            game_client.type = CLIENT
+
+            global client_thread
+            client_thread = threading.Thread(
+                target=game_client.run, daemon=True)
 
             game_client.set_name(name_input.text)
             client_thread.start()
