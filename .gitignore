@@ -1,7 +1,6 @@
 # Buildozer folders and files
 bin/
 .buildozer/
-buildozer.spec
 
 # Visual Studio cache directory
 .vs/
