@@ -89,7 +89,6 @@ class Message:
             self.write_msg_processed = False
 
     def close(self):
-        # TODO should this method be here?
         print(f"Closing connection to {self.addr}")
         try:
             self.selector.unregister(self.sock)

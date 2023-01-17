@@ -28,7 +28,6 @@ class PlayMenu(Screen):
         game_client = GameClient(ip_input.text, int(port_input.text))
         game_client.type = HOST
 
-        # TODO make them daemon threads?
         global server_thread
         server_thread = threading.Thread(target=game_server.run, daemon=True)
 
