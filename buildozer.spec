@@ -13,7 +13,7 @@ package.domain = org.mycompany
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas
+source.include_exts = py,png,jpg,kv,atlas,ttf
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png
@@ -22,7 +22,7 @@ source.include_exts = py,png,jpg,kv,atlas
 #source.exclude_exts = spec
 
 # (list) List of directory to exclude (let empty to not exclude anything)
-source.exclude_dirs = testings, bin, venv, App
+source.exclude_dirs = testings, bin, venv, TestApp, fonts/flosser, fonts/futurama, fonts/rabanera
 
 # (list) List of exclusions using pattern matching
 # Do not prefix with './'
@@ -37,7 +37,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3==3.8.10,kivy
+requirements = python3,kivy,kivymd,pillow
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
