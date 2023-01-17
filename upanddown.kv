@@ -8,12 +8,15 @@
         MDLabel:
             text: "Up & Down"
             font_style: "H2"
-            font_name: "fonts/refik/Refik.ttf"
-            color: 0, 0, 0, 1
+            font_name: "fonts/refik/RefikBook.ttf"
+            color: 1, 1, 1, 1
             size_hint: 1, None
             size: dp(100), dp(250)
             halign: "center"
             valign: "bottom"
+            outline_color: 0,0,0
+            outline_width: 4
+
     MDAnchorLayout:
         MDBoxLayout:
             orientation: "vertical"
@@ -21,7 +24,7 @@
             height: self.minimum_height
             width: self.minimum_width
             spacing: dp(10)
-            md_bg_color: [255/255,255/255,255/255,1]
+            md_bg_color: [255/255, 255/255, 255/255, 1]
             padding: dp(20)
             MDTextField:
                 id: name_input 
