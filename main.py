@@ -99,7 +99,7 @@ class Lobby(MDScreen):
         for i in range(10):
             self.players_list.append(
                 Label(text=self.write_list_name(i, ". . ."),
-                      font_size=35,
+                      font_size=50,
                       halign="center",
                       valign="center",
                       font_name="fonts/refik/RefikBook.ttf",
