@@ -1,68 +1,84 @@
 import threading
 
-from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.label import Label
+from kivy.config import Config  # noqa
+Config.set('graphics', 'width', '498')  # noqa
+Config.set('graphics', 'height', '1080')  # noqa
+
+from kivy.properties import StringProperty, Clock
 from kivy.metrics import dp
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.properties import StringProperty, Clock, ListProperty
+from kivymd.uix.button import MDTextButton
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.gridlayout import MDGridLayout
+from kivymd.uix.label import MDLabel
+from kivy.uix.label import Label
+from kivymd.uix.screen import MDScreen
+from kivymd.uix.screenmanager import MDScreenManager
+from kivymd.app import MDApp
 
 from gameServer import GameServer
-from gameclient import GameClient
 from namings import *
+from gameclient import GameClient
 
 game_server = GameServer('127.0.0.1', 7777)
 game_client = GameClient('127.0.0.1', 7777)
 
 
-class PlayMenu(Screen):
+class PlayMenu(MDScreen):
     warning_text = StringProperty("")
 
-    def on_create_room(self, name_input, ip_input, port_input):
-        global game_server
-        game_server = GameServer(ip_input.text, int(port_input.text))
-
-        global game_client
-        game_client = GameClient(ip_input.text, int(port_input.text))
-        game_client.type = HOST
-
-        global server_thread
-        server_thread = threading.Thread(target=game_server.run, daemon=True)
-
-        global client_thread
-        client_thread = threading.Thread(target=game_client.run, daemon=True)
-
-        if name_input.text == "":
-            self.warning_text = "Please provide a name"
+    def on_create_room(self):
+        if self.ids.name_input.text == "" or self.ids.name_input.error:
+            self.ids.name_input.error = True
+        elif self.ids.ip_input.text == "":
+            self.ids.ip_input.error = True
+        elif self.ids.port_input.text == "":
+            self.ids.port_input.error = True
         else:
-            print("My name is ", name_input.text)
+            global game_server
+            game_server = GameServer(
+                self.ids.ip_input.text, int(self.ids.port_input.text))
+
+            global game_client
+            game_client = GameClient(
+                self.ids.ip_input.text, int(self.ids.port_input.text))
+            game_client.type = HOST
+
+            global server_thread
+            server_thread = threading.Thread(
+                target=game_server.run, daemon=True)
+
+            global client_thread
+            client_thread = threading.Thread(
+                target=game_client.run, daemon=True)
 
             server_thread.start()
             server_thread.join(0.2)
 
             if server_thread.is_alive():
-                game_client.set_name(name_input.text)
+                game_client.set_name(self.ids.name_input.text)
                 client_thread.start()
                 self.manager.current = 'lobby'
             else:
                 self.warning_text = "Address already in use"
 
-    def on_enter_room(self, name_input, ip_input, port_input):
-        global game_client
-        game_client = GameClient(ip_input.text, int(port_input.text))
-        game_client.type = CLIENT
-
-        global client_thread
-        client_thread = threading.Thread(target=game_client.run, daemon=True)
-
-        if name_input.text == "":
-            self.warning_text = "Please provide a name"
+    def on_enter_room(self):
+        if self.ids.name_input.text == "" or self.ids.name_input.error:
+            self.ids.name_input.error = True
+        elif self.ids.ip_input.text == "":
+            self.ids.ip_input.error = True
+        elif self.ids.port_input.text == "":
+            self.ids.port_input.error = True
         else:
-            print("My name is ", name_input.text)
+            global game_client
+            game_client = GameClient(
+                self.ids.ip_input.text, int(self.ids.port_input.text))
+            game_client.type = CLIENT
 
-            game_client.set_name(name_input.text)
+            global client_thread
+            client_thread = threading.Thread(
+                target=game_client.run, daemon=True)
+
+            game_client.set_name(self.ids.name_input.text)
             client_thread.start()
             client_thread.join(0.2)
 
@@ -72,50 +88,33 @@ class PlayMenu(Screen):
                 self.warning_text = "There is no server running with this address"
 
 
-class Lobby(Screen):
+class Lobby(MDScreen):
     # Create graphics
+
     def __init__(self, **kw):
         super().__init__(**kw)
-        box_background = BoxLayout(orientation='vertical')
 
-        players_grid = GridLayout(rows=5)
-
-        # Lobby list
-        title = Label(text="Players",
-                      font_size=30,
-                      halign="center",
-                      valign="center",
-                      size_hint=(1, None),
-                      size=(dp(100), dp(80)))
-        title.text_size = title.size
-
+        # Create list of players
         self.players_list = []
         for i in range(10):
             self.players_list.append(
-                Label(text="{}: ***********".format("H" if i == 0 else str(i+1)),
-                      font_size=20)
+                Label(text=self.write_list_name(i, ". . ."),
+                      font_size=50,
+                      halign="center",
+                      valign="center",
+                      font_name="fonts/refik/RefikBook.ttf",
+                      outline_color=(0, 0, 0),
+                      outline_width=3,
+                      size_hint=(1, None),
+                      size=(1, dp(60)),
+                      )
             )
-            players_grid.add_widget(self.players_list[-1])
+            self.ids.players_grid.add_widget(self.players_list[-1])
 
-        btns_box = BoxLayout(orientation="horizontal",
-                             size_hint=(1, None), size=(dp(0), dp(60)),
-                             spacing=dp(25))
-
-        self.leave_btn = Button(text='Leave',
-                                size_hint=(0.6, 1))
-        self.leave_btn.bind(on_release=self.on_leave_btn)
-
-        self.play_btn = Button(text='Play',
-                               size_hint=(0.6, 1))
-
-        btns_box.add_widget(self.leave_btn)
-        btns_box.add_widget(self.play_btn)
-
-        box_background.add_widget(title)
-        box_background.add_widget(players_grid)
-        box_background.add_widget(btns_box)
-
-        self.add_widget(box_background)
+    def write_list_name(self, i, name):
+        return "{} .   {}".format(
+            "H" if i == 0 else str(i+1),
+            name)
 
     def on_pre_enter(self, *args):
         global game_client
@@ -124,9 +123,9 @@ class Lobby(Screen):
         Clock.schedule_once(lambda dt: self.update_lobby_list(), -1)
 
         if game_client.type != HOST:
-            self.play_btn.disabled = True
+            self.ids.play_btn.disabled = True
         else:
-            self.play_btn.disabled = False
+            self.ids.play_btn.disabled = False
 
     def on_enter(self, *args):
         super().on_enter(*args)
@@ -152,7 +151,7 @@ class Lobby(Screen):
             client_thread.join()
             self.manager.current = 'play_menu'
 
-    def on_leave_btn(self, instance):
+    def on_leave_btn(self):
         global game_client
         global game_server
         global server_thread
@@ -172,30 +171,20 @@ class Lobby(Screen):
 
         num_players = len(game_client.lobby_status.players_list)
         for i in range(num_players):
-            self.players_list[i].text = "{}: {}".format(
-                "H" if i == 0 else str(i+1), game_client.lobby_status.players_list[i])
+            self.players_list[i].text = self.write_list_name(
+                i, game_client.lobby_status.players_list[i])
 
         for i in range(num_players, len(self.players_list)):
-            self.players_list[i].text = "{}: {}".format(
-                "H" if i == 0 else str(i+1), "")
+            self.players_list[i].text = self.write_list_name(i, ". . .")
 
 
-class UpAndDownApp(App):
+class UpAndDownApp(MDApp):
     def build(self):
         # Create the screen manager
-        sm = ScreenManager()
+        sm = MDScreenManager()
         sm.add_widget(PlayMenu(name="play_menu"))
         sm.add_widget(Lobby(name="lobby"))
         return sm
 
 
-# Main
-try:
-    UpAndDownApp().run()
-except:
-    if server_thread.is_alive():
-        game_server.close_server = True
-        server_thread.join()
-    if client_thread.is_alive():
-        game_client.close_client = True
-        client_thread.join()
+UpAndDownApp().run()
