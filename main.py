@@ -1,24 +1,23 @@
 import threading
 
-mobile_screen_ration = 19.5/9
-from kivy.config import Config
-Config.set('graphics', 'width', '498')
-Config.set('graphics', 'height', '1080')
+from kivy.config import Config  # noqa
+Config.set('graphics', 'width', '498')  # noqa
+Config.set('graphics', 'height', '1080')  # noqa
 
-from kivymd.app import MDApp
-from kivymd.uix.screenmanager import MDScreenManager
-from kivymd.uix.screen import MDScreen
-from kivymd.uix.label import MDLabel
-from kivymd.uix.gridlayout import MDGridLayout
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.button import MDTextButton
-from kivy.metrics import dp
 from kivy.properties import StringProperty, Clock
-
+from kivy.metrics import dp
+from kivymd.uix.button import MDTextButton
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.gridlayout import MDGridLayout
+from kivymd.uix.label import MDLabel
+from kivy.uix.label import Label
+from kivymd.uix.screen import MDScreen
+from kivymd.uix.screenmanager import MDScreenManager
+from kivymd.app import MDApp
 
 from gameServer import GameServer
-from gameclient import GameClient
 from namings import *
+from gameclient import GameClient
 
 game_server = GameServer('127.0.0.1', 7777)
 game_client = GameClient('127.0.0.1', 7777)
@@ -91,49 +90,31 @@ class PlayMenu(MDScreen):
 
 class Lobby(MDScreen):
     # Create graphics
+
     def __init__(self, **kw):
         super().__init__(**kw)
-        box_background = MDBoxLayout(orientation='vertical')
 
-        players_grid = MDGridLayout(rows=5)
-
-        # Lobby list
-        title = MDLabel(text="Players",
-                        font_size=30,
-                        halign="center",
-                        valign="center",
-                        size_hint=(1, None),
-                        size=(dp(100), dp(80)))
-        title.text_size = title.size
-
+        # Create list of players
         self.players_list = []
         for i in range(10):
             self.players_list.append(
-                MDLabel(text="{}: ***********".format("H" if i == 0 else str(i+1)),
-                        font_size=20)
+                Label(text=self.write_list_name(i, ". . ."),
+                      font_size=35,
+                      halign="center",
+                      valign="center",
+                      font_name="fonts/refik/RefikBook.ttf",
+                      outline_color=(0, 0, 0),
+                      outline_width=3,
+                      size_hint=(1, None),
+                      size=(1, dp(60)),
+                      )
             )
-            players_grid.add_widget(self.players_list[-1])
+            self.ids.players_grid.add_widget(self.players_list[-1])
 
-        btns_box = MDBoxLayout(orientation="horizontal",
-                               size_hint=(1, None), size=(dp(0), dp(60)),
-                               spacing=dp(25),
-                               padding=dp(25))
-
-        self.leave_btn = MDTextButton(text='Leave',
-                                      size_hint=(0.6, 1))
-        self.leave_btn.bind(on_release=self.on_leave_btn)
-
-        self.play_btn = MDTextButton(text='Play',
-                                     size_hint=(0.6, 1))
-
-        btns_box.add_widget(self.leave_btn)
-        btns_box.add_widget(self.play_btn)
-
-        box_background.add_widget(title)
-        box_background.add_widget(players_grid)
-        box_background.add_widget(btns_box)
-
-        self.add_widget(box_background)
+    def write_list_name(self, i, name):
+        return "{} .   {}".format(
+            "H" if i == 0 else str(i+1),
+            name)
 
     def on_pre_enter(self, *args):
         global game_client
@@ -142,9 +123,9 @@ class Lobby(MDScreen):
         Clock.schedule_once(lambda dt: self.update_lobby_list(), -1)
 
         if game_client.type != HOST:
-            self.play_btn.disabled = True
+            self.ids.play_btn.disabled = True
         else:
-            self.play_btn.disabled = False
+            self.ids.play_btn.disabled = False
 
     def on_enter(self, *args):
         super().on_enter(*args)
@@ -170,7 +151,7 @@ class Lobby(MDScreen):
             client_thread.join()
             self.manager.current = 'play_menu'
 
-    def on_leave_btn(self, instance):
+    def on_leave_btn(self):
         global game_client
         global game_server
         global server_thread
@@ -190,12 +171,11 @@ class Lobby(MDScreen):
 
         num_players = len(game_client.lobby_status.players_list)
         for i in range(num_players):
-            self.players_list[i].text = "{}: {}".format(
-                "H" if i == 0 else str(i+1), game_client.lobby_status.players_list[i])
+            self.players_list[i].text = self.write_list_name(
+                i, game_client.lobby_status.players_list[i])
 
         for i in range(num_players, len(self.players_list)):
-            self.players_list[i].text = "{}: {}".format(
-                "H" if i == 0 else str(i+1), "")
+            self.players_list[i].text = self.write_list_name(i, ". . .")
 
 
 class UpAndDownApp(MDApp):
@@ -207,13 +187,4 @@ class UpAndDownApp(MDApp):
         return sm
 
 
-# Main
-# try:
 UpAndDownApp().run()
-# except:
-#     if server_thread.is_alive():
-#         game_server.close_server = True
-#         server_thread.join()
-#     if client_thread.is_alive():
-#         game_client.close_client = True
-#         client_thread.join()

@@ -36,9 +36,9 @@
                 size: dp(100), dp(50)
                 max_text_length: 7
             MDTextField:
-                id: ip_input 
+                id: ip_input
                 hint_text: "Write the IP address"
-                helper_text: "Provide IP address (on dots)"
+                helper_text: "Provide IP address"
                 helper_text_mode: "on_error"
                 multiline: False
                 size_hint: 1, None
@@ -70,3 +70,56 @@
 
 <Lobby>
     name: "lobby"
+    md_bg_color: 0/255, 170/255, 0/255, 1
+    MDAnchorLayout:
+        padding: dp(25)
+        anchor_x: 'center'
+        anchor_y: 'top'
+        MDLabel:
+            text: "Players"
+            font_style: "H2"
+            font_name: "fonts/refik/RefikBook.ttf"
+            color: 1, 1, 1, 1
+            size_hint: 1, None
+            size: dp(100), dp(250)
+            halign: "center"
+            valign: "center"
+            outline_color: 0,0,0
+            outline_width: 3
+            text_size: self.size
+    MDAnchorLayout:
+        MDBoxLayout:
+            size_hint: 0.9, 0.5
+            height: self.minimum_height
+            width: self.minimum_width
+            orientation: "vertical"
+            padding: dp(25)
+            MDGridLayout:
+                id: players_grid
+                rows: 5
+            MDBoxLayout:
+                orientation: "horizontal"
+                size_hint: 1, 0.4
+                height: self.minimum_height
+                width: self.minimum_width
+                spacing: dp(25)
+                padding: dp(25)
+                MDTextButton:
+                    md_bg_color: [50/255,50/255,50/255,1]
+                    text: 'Leave'
+                    halign: "center"
+                    valign: "center"
+                    size_hint: 1, 1
+                    color: [200/255,200/255,200/255,1]
+                    on_release: root.on_leave_btn()
+                MDTextButton:
+                    id: play_btn
+                    md_bg_color: [50/255,50/255,50/255,1]
+                    text: 'Play'
+                    halign: "center"
+                    valign: "center"
+                    size_hint: 1, 1
+                    color: [200/255,200/255,200/255,1]
+                    # on_release: root.on_play_btn()
+
+
