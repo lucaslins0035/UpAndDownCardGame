@@ -123,6 +123,7 @@
                     # on_release: root.on_play_btn()
 
 <GamePlay>:
+    #:set card_size_hint (0.3, 0.23)
     name: "game_play"
     MDBoxLayout:
         orientation: "vertical"
@@ -140,26 +141,59 @@
             pos_hint: {'right': 1.0,'center_y': 0.0}
             color: [200/255,200/255,200/255,1]
         MDAnchorLayout:
-            MDGridLayout:
+            MDRelativeLayout:
                 size_hint: 0.95, 0.95
                 spacing: dp(20)
                 # padding: dp(15)
-                rows: 4
-                cols: 3
+                # rows: 4
+                # cols: 3
                 PlayerSpot:
+                    size_hint: card_size_hint
+                    pos_hint: {'right': 0.33, 'top': 0.25}
                 PlayerSpot:
+                    size_hint: card_size_hint
+                    pos_hint: {'right': 0.33,'top': 0.5}
                 PlayerSpot:
+                    size_hint: card_size_hint
+                    pos_hint: {'right': 0.33,'top': 0.75}
                 PlayerSpot:
-                MDCard:
-                    md_bg_color: 0/255, 170/255, 0/255, 1 
+                    size_hint: card_size_hint
+                    pos_hint: {'right': 0.33,'top': 1.0}
+                MDBoxLayout:
+                    orientation: "vertical"
+                    pos_hint: {'center_x': 0.53,'center_y': 0.55}
+                    size_hint: 0.25, 0.25
+                    spacing: dp(10)
+                    MDLabel:
+                        text: "Wild Card"
+                        size_hint: None, None
+                        size: self.texture_size
+                        text_size: None, None
+                        pos_hint: {'center_x': 0.5,'center_y': 0.0}
+                    MDAnchorLayout:
+                        Image:
+                            md_bg_color: 0/255, 170/255, 0/255, 1
+                            source: "images/2_of_clubs.png"
+                            allow_stretch: False
+                            size_hint: 0.75, 1.0
                 PlayerSpot:
+                    size_hint: card_size_hint
+                    pos_hint: {'right': 0.66, 'top': 0.25}
                 PlayerSpot:
-                MDCard:
-                    md_bg_color: 0/255, 170/255, 0/255, 1
+                    size_hint: card_size_hint
+                    pos_hint: {'right': 0.66, 'top': 1.0}
                 PlayerSpot:
+                    size_hint: card_size_hint
+                    pos_hint: {'right': 1.0, 'top': 0.25}
                 PlayerSpot:
+                    size_hint: card_size_hint
+                    pos_hint: {'right': 1.0, 'top': 0.5}
                 PlayerSpot:
+                    size_hint: card_size_hint
+                    pos_hint: {'right': 1.0, 'top': 0.75}
                 PlayerSpot:
+                    size_hint: card_size_hint
+                    pos_hint: {'right': 1.0, 'top': 1.0}
         Button:
             text: "test"
             color: 1, 0, 0, 1
@@ -177,7 +211,7 @@
         size: self.texture_size
         text_size: None, None
         pos_hint: {'center_x': 0.5,'center_y': 0.0}
-    AnchorLayout:
+    MDAnchorLayout:
         Image:
             source: "images/2_of_clubs.png"
             allow_stretch: False
