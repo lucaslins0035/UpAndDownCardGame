@@ -144,9 +144,6 @@
             MDRelativeLayout:
                 size_hint: 0.95, 0.95
                 spacing: dp(20)
-                # padding: dp(15)
-                # rows: 4
-                # cols: 3
                 PlayerSpot:
                     size_hint: card_size_hint
                     pos_hint: {'right': 0.33, 'top': 0.25}
@@ -163,9 +160,10 @@
                     orientation: "vertical"
                     pos_hint: {'center_x': 0.53,'center_y': 0.55}
                     size_hint: 0.25, 0.25
-                    spacing: dp(10)
+                    spacing: dp(5)
                     MDLabel:
-                        text: "Wild Card"
+                        markup: True
+                        text: "[b]Wild Card[/b]"
                         size_hint: None, None
                         size: self.texture_size
                         text_size: None, None
@@ -203,28 +201,23 @@
     orientation: "vertical"
     spacing: dp(10)
     MDLabel:
-        # md_bg_color: 255/255, 0/255, 0/255, 1
-        text: "MY NAME"
-        halign: "center"
-        valign: "center"
+        markup: True
+        text: "[b]MY NAME[/b]"
+        color: 0, 0, 0, 1
         size_hint: None, None
         size: self.texture_size
         text_size: None, None
         pos_hint: {'center_x': 0.5,'center_y': 0.0}
-    MDAnchorLayout:
-        Image:
-            source: "images/2_of_clubs.png"
-            allow_stretch: False
-            size_hint: 0.75, 1
-            halign: "center"
-            valign: "center"
+    Image:
+        source: "images/2_of_clubs.png"
+        allow_stretch: False
+        size_hint: 0.75, 1
+        pos_hint: {'center_x': 0.5,'center_y': 0.0}
     MDLabel:
-        text: " 0 | 0"
-        halign: "center"
-        valign: "center"
+        markup: True
+        text: "[b]0 | 0[/b]"
         size_hint: None, None
         size: self.texture_size
         text_size: None, None
         pos_hint: {'center_x': 0.5,'center_y': 0.0}
-    
 
