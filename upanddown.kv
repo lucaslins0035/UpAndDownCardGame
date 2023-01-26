@@ -122,4 +122,75 @@
                     color: [200/255,200/255,200/255,1]
                     # on_release: root.on_play_btn()
 
+<GamePlay>:
+    name: "game_play"
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: 0/255, 170/255, 0/255, 1
+        spacing: dp(25)
+        padding: dp(10)
+        Button:
+            md_bg_color: [50/255,50/255,50/255,1]
+            text: 'X'
+            halign: "center"
+            valign: "center"
+            size_hint: None, None
+            height: dp(50)
+            width: dp(50)
+            pos_hint: {'right': 1.0,'center_y': 0.0}
+            color: [200/255,200/255,200/255,1]
+        MDAnchorLayout:
+            MDGridLayout:
+                size_hint: 0.95, 0.95
+                spacing: dp(20)
+                # padding: dp(15)
+                rows: 4
+                cols: 3
+                PlayerSpot:
+                PlayerSpot:
+                PlayerSpot:
+                PlayerSpot:
+                MDCard:
+                    md_bg_color: 0/255, 170/255, 0/255, 1 
+                PlayerSpot:
+                PlayerSpot:
+                MDCard:
+                    md_bg_color: 0/255, 170/255, 0/255, 1
+                PlayerSpot:
+                PlayerSpot:
+                PlayerSpot:
+                PlayerSpot:
+        Button:
+            text: "test"
+            color: 1, 0, 0, 1
+            size_hint: 1, 0.2
+        
+<PlayerSpot>:
+    orientation: "vertical"
+    spacing: dp(10)
+    MDLabel:
+        # md_bg_color: 255/255, 0/255, 0/255, 1
+        text: "MY NAME"
+        halign: "center"
+        valign: "center"
+        size_hint: None, None
+        size: self.texture_size
+        text_size: None, None
+        pos_hint: {'center_x': 0.5,'center_y': 0.0}
+    AnchorLayout:
+        Image:
+            source: "images/2_of_clubs.png"
+            allow_stretch: False
+            size_hint: 0.75, 1
+            halign: "center"
+            valign: "center"
+    MDLabel:
+        text: " 0 | 0"
+        halign: "center"
+        valign: "center"
+        size_hint: None, None
+        size: self.texture_size
+        text_size: None, None
+        pos_hint: {'center_x': 0.5,'center_y': 0.0}
+    
 

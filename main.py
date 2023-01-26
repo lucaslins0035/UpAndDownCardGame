@@ -178,10 +178,17 @@ class Lobby(MDScreen):
             self.players_list[i].text = self.write_list_name(i, ". . .")
 
 
+class GamePlay(MDScreen):
+    pass
+
+class PlayerSpot(MDBoxLayout):
+    pass
+
 class UpAndDownApp(MDApp):
     def build(self):
         # Create the screen manager
         sm = MDScreenManager()
+        sm.add_widget(GamePlay(name="game_play"))
         sm.add_widget(PlayMenu(name="play_menu"))
         sm.add_widget(Lobby(name="lobby"))
         return sm
