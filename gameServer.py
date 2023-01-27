@@ -18,6 +18,7 @@ class GameServer():
         self.sel = selectors.DefaultSelector()
         self.sel.register(self.server_sock, selectors.EVENT_READ, data=None)
 
+        self.players_reg = {}
         self.clients = 0
         self.server_ip = ip
         self.server_port = port
@@ -73,7 +74,7 @@ class GameServer():
                             message.close()
                         else:
                             if message.sock is None:
-                                self.lobby_status.remove_player(
+                                self.remove_player(
                                     str(message.addr))
             print("Shutting down Server")
         except KeyboardInterrupt:
@@ -82,6 +83,14 @@ class GameServer():
             for sel_key in self.sel.get_map().values():
                 sel_key.fileobj.close()
             self.sel.close()
+            
+    def add_player(self, player_name, addr):
+        self.players_reg.update({addr: player_name})
+        self.lobby_status.update_list(self.players_reg)
+
+    def remove_player(self, addr):
+        self.players_reg.pop(addr)
+        self.lobby_status.update_list(self.players_reg)
 
 # def test_callback(server, message):
 #     print("Server got: " + message.read_msg)
@@ -89,12 +98,16 @@ class GameServer():
 
 def update_status(server, message, game_state):
     if game_state == LOBBY:
-        if str(message.addr) not in server.lobby_status.players_reg.keys():
-            server.lobby_status.add_player(
+        if str(message.addr) not in server.players_reg.keys():
+            server.add_player(
                 message.read_msg.name, str(message.addr))
             print(str(time.time()) + " - Server got: " +
                   str(message.read_msg.name))
-        elif message.read_msg.name == '':
-            pass
+        # elif message.read_msg.name == '':
+        #     pass
+        if not server.lobby_status.start_game:
+            server.lobby_status.start_game = message.read_msg.start_game
+            if server.lobby_status.start_game:
+                game_state = GAME
     else:
         print("GAME: Server got: " + message.read_msg)
