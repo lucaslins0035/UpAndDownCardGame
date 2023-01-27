@@ -121,16 +121,9 @@ class Message:
         #     f"read_msg from {self.addr}"
         # )
 
-    def create_header(self, value):
-        header = bytearray(1)
-        header.append(len(value))
-        if len(header) == 2:
-            return header
-        return header[1:]
-
     def process_write_msg(self):
         payload = pickle.dumps(self.write_msg_payload)
-        message = self.create_header(payload) + payload
+        message = len(payload).to_bytes(2, 'big') + payload
         self._send_buffer += message
         self.write_msg_processed = True
 
