@@ -4,7 +4,7 @@ import selectors
 import types
 from functools import partial
 
-from network_msg_types import LobbyStatus, LobbyPlayerStatus
+from network_msg_types import PlayerStatus, GameStatus
 from network_msg import Message
 from namings import *
 
@@ -20,12 +20,12 @@ class GameClient():
         self.close_client = False
         self.game_state = LOBBY
         self.name = ""
-        self.lobby_client_state = LobbyPlayerStatus()
-        self.lobby_status = LobbyStatus()
+        self.player_status = PlayerStatus()
+        self.game_status = GameStatus()
         self.type = None
 
     def run(self):
-        self.lobby_client_state.name = self.name
+        self.player_status.name = self.name
         events = selectors.EVENT_WRITE  # Client always writes first
         connection_error = self.client_sock.connect_ex(
             (self.server_ip, self.server_port))
@@ -34,20 +34,16 @@ class GameClient():
         self.client_sock.setblocking(False)
         message = Message(self.sel, self.client_sock,
                           (self.server_ip, self.server_port))
-        message.set_write_msg_payload(self.lobby_client_state)
+        message.set_write_msg_payload(self.player_status)
         message.deliver_read_msg_callback = partial(
-            update_status, client=self, message=message, game_state=self.game_state)
+            self.update_status, message=message)
         self.sel.register(self.client_sock, events, data=message)
         try:
             while not self.close_client:
                 events = self.sel.select(timeout=1)
                 for key, mask in events:
                     message = key.data
-                    if self.game_state == LOBBY:
-                        message.set_write_msg_payload(self.lobby_client_state)
-                    else:
-                        message.set_write_msg_payload(
-                            "CLIENT: to game mode")
+                    message.set_write_msg_payload(self.player_status)
                     try:
                         message.process_events(mask)
                     except Exception:
@@ -72,15 +68,17 @@ class GameClient():
             for sel_key in self.sel.get_map().values():
                 sel_key.fileobj.close()
             self.sel.close()
-            
+
     def set_name(self, name):
         self.name = name
 
-
-def update_status(client, message, game_state):
-    if game_state == LOBBY:
-        client.lobby_status = message.read_msg
-        print(str(time.time()) + " - Client got: " +
-              str(client.lobby_status.players_list))
-    else:
-        print("GAME: Client got: " + message.read_msg)
+    def update_status(self, message):
+        if self.game_state == LOBBY:
+            self.game_status = message.read_msg
+            # print(str(time.time()) + " - Client got: " +
+            #       str(self.game_status.players_list))
+            if self.game_status.valid_game:
+                self.game_state = GAME
+        elif self.game_state == GAME:
+            self.game_status = message.read_msg
+            # print(str(time.time()) + "CLIENT: game started")

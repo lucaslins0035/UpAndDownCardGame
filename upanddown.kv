@@ -120,7 +120,7 @@
                     valign: "center"
                     size_hint: 1, 1
                     color: [200/255,200/255,200/255,1]
-                    # on_release: root.on_play_btn()
+                    on_release: root.on_play_btn()
 
 <GamePlay>:
     #:set card_size_hint (0.3, 0.23)
@@ -140,20 +140,25 @@
             width: dp(50)
             pos_hint: {'right': 1.0,'center_y': 0.0}
             color: [200/255,200/255,200/255,1]
+            on_release: root.on_exit_btn()
         MDAnchorLayout:
             MDRelativeLayout:
                 size_hint: 0.99, 0.99
                 spacing: dp(20)
                 PlayerSpot:
+                    id: player8
                     size_hint: card_size_hint
                     pos_hint: {'right': 0.33, 'top': 0.25}
                 PlayerSpot:
+                    id: player9
                     size_hint: card_size_hint
                     pos_hint: {'right': 0.33,'top': 0.5}
                 PlayerSpot:
+                    id: player10
                     size_hint: card_size_hint
                     pos_hint: {'right': 0.33,'top': 0.75}
                 PlayerSpot:
+                    id: player1
                     size_hint: card_size_hint
                     pos_hint: {'right': 0.33,'top': 1.0}
                 MDBoxLayout:
@@ -176,34 +181,41 @@
                             allow_stretch: False
                             size_hint: 0.75, 1.0
                 PlayerSpot:
+                    id: player7
                     size_hint: card_size_hint
                     pos_hint: {'right': 0.66, 'top': 0.25}
                 PlayerSpot:
+                    id: player2
                     size_hint: card_size_hint
                     pos_hint: {'right': 0.66, 'top': 1.0}
                 PlayerSpot:
+                    id: player6
                     size_hint: card_size_hint
                     pos_hint: {'right': 1.0, 'top': 0.25}
                 PlayerSpot:
+                    id: player5
                     size_hint: card_size_hint
                     pos_hint: {'right': 1.0, 'top': 0.5}
                 PlayerSpot:
+                    id: player4
                     size_hint: card_size_hint
                     pos_hint: {'right': 1.0, 'top': 0.75}
                 PlayerSpot:
+                    id: player3
                     size_hint: card_size_hint
                     pos_hint: {'right': 1.0, 'top': 1.0}
         Button:
             text: "test"
             color: 1, 0, 0, 1
             size_hint: 1, 0.2
+
         
 <PlayerSpot>:
     orientation: "vertical"
     spacing: dp(10)
     MDLabel:
         markup: True
-        text: "[b]MY NAME[/b]"
+        text: "[b]{}[/b]".format(root.name)
         font_style: "Subtitle1"
         color: 0, 0, 0, 1
         size_hint: None, None
@@ -211,16 +223,40 @@
         text_size: None, None
         pos_hint: {'center_x': 0.5,'center_y': 0.0}
     Image:
-        source: "images/2_of_clubs.png"
+        source: root.card
         allow_stretch: False
         size_hint: 0.75, 1
         pos_hint: {'center_x': 0.5,'center_y': 0.0}
     MDLabel:
         font_style: "Subtitle1"
         markup: True
-        text: "[b]0 | 0[/b]"
+        text: "[b]{} | {}[/b]".format(root.current_score, root.bet)
         size_hint: None, None
         size: self.texture_size
         text_size: None, None
         pos_hint: {'center_x': 0.5,'center_y': 0.0}
 
+<ExitGamePopup>:
+    title: "Exit Game"
+    auto_dismiss: False
+    size_hint: 0.6, 0.3
+    MDBoxLayout:
+        padding: dp(25)
+        orientation: 'vertical'
+        MDLabel:
+            text: "If you leave the game, the match will be ended.\nDo you still want to exit?"
+            color: 1, 1, 1, 1
+            font_style: 'Subtitle1'
+        MDBoxLayout:
+            orientation: "horizontal"
+            spacing: dp(15)
+            Button:
+                text: "Cancel"
+                on_release: root.dismiss()
+                size_hint_y: None
+                height: dp(70)
+            Button:
+                id: exit_btn
+                text: "Exit"
+                size_hint_y: None
+                height: dp(70)

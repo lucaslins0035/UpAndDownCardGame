@@ -1,10 +1,11 @@
 import threading
+from functools import partial
 
 from kivy.config import Config  # noqa
 Config.set('graphics', 'width', '498')  # noqa
 Config.set('graphics', 'height', '1080')  # noqa
 
-from kivy.properties import StringProperty, Clock
+from kivy.properties import StringProperty, Clock, NumericProperty
 from kivy.metrics import dp
 from kivymd.uix.button import MDTextButton
 from kivymd.uix.boxlayout import MDBoxLayout
@@ -13,6 +14,7 @@ from kivymd.uix.label import MDLabel
 from kivy.uix.label import Label
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.screenmanager import MDScreenManager
+from kivy.uix.popup import Popup
 from kivymd.app import MDApp
 
 from gameServer import GameServer
@@ -120,7 +122,7 @@ class Lobby(MDScreen):
         global game_client
 
         super().on_pre_enter(*args)
-        Clock.schedule_once(lambda dt: self.update_lobby_list(), -1)
+        Clock.schedule_once(lambda dt: self.update_lobby(), -1)
 
         if game_client.type != HOST:
             self.ids.play_btn.disabled = True
@@ -130,26 +132,15 @@ class Lobby(MDScreen):
     def on_enter(self, *args):
         super().on_enter(*args)
         self.check_server_life_event = Clock.schedule_interval(
-            lambda dt: self.check_server_life(), 1)
-        self.update_lobby_list_event = Clock.schedule_interval(
-            lambda dt: self.update_lobby_list(), 1)
+            lambda dt: check_server_life(self), 1)
+        self.update_lobby_event = Clock.schedule_interval(
+            lambda dt: self.update_lobby(), 1)
 
     def on_leave(self, *args):
         super().on_leave(*args)
         self.check_server_life_event.cancel()
-        self.update_lobby_list_event.cancel()
+        self.update_lobby_event.cancel()
 
-    def check_server_life(self):
-        global server_thread
-        global client_thread
-        print("Check server")
-
-        client_thread.join(0.1)
-
-        if not client_thread.is_alive() and self.manager.current == 'lobby':
-            game_client.close_client = True
-            client_thread.join()
-            self.manager.current = 'play_menu'
 
     def on_leave_btn(self):
         global game_client
@@ -166,31 +157,105 @@ class Lobby(MDScreen):
             client_thread.join()
         self.manager.current = 'play_menu'
 
-    def update_lobby_list(self):
+    def on_play_btn(self):
+        game_client.player_status.start_game = True
+
+    def update_lobby(self):
         global game_client
 
-        num_players = len(game_client.lobby_status.players_list)
+        # Update lobby list
+        num_players = len(game_client.game_status.players_list)
         for i in range(num_players):
             self.players_list[i].text = self.write_list_name(
-                i, game_client.lobby_status.players_list[i])
+                i, game_client.game_status.players_list[i])
 
         for i in range(num_players, len(self.players_list)):
             self.players_list[i].text = self.write_list_name(i, ". . .")
 
+        # Check start game
+        if game_client.game_state == GAME:
+            # print(game_client.game_state)
+            self.manager.current = 'game_play'
+
+def check_server_life(screen):
+    global server_thread
+    global client_thread
+    print("Check server")
+
+    client_thread.join(0.1)
+
+    if not client_thread.is_alive() and screen.manager.current in ['lobby', 'game_play']:
+        game_client.close_client = True
+        client_thread.join()
+        screen.manager.current = 'play_menu'
 
 class GamePlay(MDScreen):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.exit_popup = ExitGamePopup()
+        self.exit_popup.ids['exit_btn'].bind(on_release=self.on_exit_btn_popup)
+
+    def on_pre_enter(self, *args):
+        global game_client
+        super().on_pre_enter(*args)
+        num_players = len(game_client.game_status.players_list)
+
+        # Write player names
+        for i in range(num_players):
+            self.ids["player" +
+                     str(i+1)].name = game_client.game_status.players_list[i]
+        for i in range(num_players, 10):
+            self.ids["player" +
+                     str(i+1)].name = ""
+
+    def on_enter(self, *args):
+        super().on_enter(*args)
+        self.check_server_life_event = Clock.schedule_interval(
+            lambda dt: check_server_life(self), 1)
+
+    def on_exit_btn(self):
+        self.exit_popup.open()
+
+    def on_exit_btn_popup(self, instance):
+        global game_client
+        global game_server
+        global server_thread
+        global client_thread
+        if game_client.type == HOST:
+            game_server.close_server = True
+            game_client.close_client = True
+            server_thread.join()
+            client_thread.join()
+        else:
+            game_client.close_client = True
+            client_thread.join()
+        self.exit_popup.dismiss()
+        self.manager.current = 'play_menu'
+            
+    def on_leave(self, *args):
+        super().on_leave(*args)
+        self.check_server_life_event.cancel()
+
+
+class ExitGamePopup(Popup):
     pass
 
+
 class PlayerSpot(MDBoxLayout):
-    pass
+    name = StringProperty("Player")
+    bet = NumericProperty(0)
+    current_score = NumericProperty(0)
+    card = StringProperty("images/empty_card.png")
+    # TODO method change card
+
 
 class UpAndDownApp(MDApp):
     def build(self):
         # Create the screen manager
         sm = MDScreenManager()
-        sm.add_widget(GamePlay(name="game_play"))
         sm.add_widget(PlayMenu(name="play_menu"))
         sm.add_widget(Lobby(name="lobby"))
+        sm.add_widget(GamePlay(name="game_play"))
         return sm
 
 

@@ -4,7 +4,7 @@ import selectors
 import types
 from functools import partial
 
-from network_msg_types import LobbyStatus, LobbyPlayerStatus
+from network_msg_types import GameStatus
 from network_msg import Message
 from namings import *
 
@@ -24,7 +24,7 @@ class GameServer():
         self.server_port = port
         self.close_server = False
         self.game_state = LOBBY
-        self.lobby_status = LobbyStatus()
+        self.game_status = GameStatus()
 
     def evaluate_connection(self, sock):
         conn, addr = sock.accept()
@@ -32,9 +32,9 @@ class GameServer():
             print(f"Accepted connection from {addr}")
             conn.setblocking(False)
             message = Message(self.sel, conn, addr)
-            message.set_write_msg_payload(self.lobby_status)
+            message.set_write_msg_payload(self.game_status)
             message.deliver_read_msg_callback = partial(
-                update_status, server=self, message=message, game_state=self.game_state)
+                self.update_status, message=message)
             events = selectors.EVENT_READ   # Server always reads first
             self.sel.register(conn, events, data=message)
             self.clients += 1
@@ -59,11 +59,7 @@ class GameServer():
                         self.evaluate_connection(key.fileobj)
                     else:
                         message = key.data
-                        if self.game_state == LOBBY:
-                            message.set_write_msg_payload(self.lobby_status)
-                        else:
-                            message.set_write_msg_payload(
-                                "SERVER: state at game mode")
+                        message.set_write_msg_payload(self.game_status)
                         try:
                             message.process_events(mask)
                         except Exception:
@@ -76,6 +72,10 @@ class GameServer():
                             if message.sock is None:
                                 self.remove_player(
                                     str(message.addr))
+                                if self.game_state == GAME:
+                                    self.game_status.valid_game = False
+                                    self.close_server = True
+
             print("Shutting down Server")
         except KeyboardInterrupt:
             print("Caught keyboard interrupt, exiting")
@@ -83,31 +83,27 @@ class GameServer():
             for sel_key in self.sel.get_map().values():
                 sel_key.fileobj.close()
             self.sel.close()
-            
+
     def add_player(self, player_name, addr):
         self.players_reg.update({addr: player_name})
-        self.lobby_status.update_list(self.players_reg)
+        self.game_status.update_list(self.players_reg)
 
     def remove_player(self, addr):
         self.players_reg.pop(addr)
-        self.lobby_status.update_list(self.players_reg)
+        self.game_status.update_list(self.players_reg)
 
-# def test_callback(server, message):
-#     print("Server got: " + message.read_msg)
-
-
-def update_status(server, message, game_state):
-    if game_state == LOBBY:
-        if str(message.addr) not in server.players_reg.keys():
-            server.add_player(
-                message.read_msg.name, str(message.addr))
-            print(str(time.time()) + " - Server got: " +
-                  str(message.read_msg.name))
-        # elif message.read_msg.name == '':
-        #     pass
-        if not server.lobby_status.start_game:
-            server.lobby_status.start_game = message.read_msg.start_game
-            if server.lobby_status.start_game:
-                game_state = GAME
-    else:
-        print("GAME: Server got: " + message.read_msg)
+    def update_status(self, message):
+        if self.game_state == LOBBY:
+            if str(message.addr) not in self.players_reg.keys():
+                self.add_player(
+                    message.read_msg.name, str(message.addr))
+                # print(str(time.time()) + " - Server got: " +
+                #       str(message.read_msg.name))
+            if not self.game_status.valid_game:
+                self.game_status.valid_game = message.read_msg.start_game
+                if self.game_status.valid_game:
+                    self.game_state = GAME
+                    # print("STARTING GAME")
+        else:
+            pass
+            # print(str(time.time()) + "GAME STARTED")
