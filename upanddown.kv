@@ -128,87 +128,102 @@
     MDBoxLayout:
         orientation: "vertical"
         md_bg_color: 0/255, 170/255, 0/255, 1
-        spacing: dp(25)
+        spacing: dp(10)
         padding: dp(10)
-        Button:
-            md_bg_color: [50/255,50/255,50/255,1]
-            text: 'X'
-            halign: "center"
-            valign: "center"
-            size_hint: None, None
-            height: dp(50)
-            width: dp(50)
-            pos_hint: {'right': 1.0,'center_y': 0.0}
-            color: [200/255,200/255,200/255,1]
-            on_release: root.on_exit_btn()
-        MDAnchorLayout:
-            MDRelativeLayout:
-                size_hint: 0.99, 0.99
-                spacing: dp(20)
-                PlayerSpot:
-                    id: player8
-                    size_hint: card_size_hint
-                    pos_hint: {'right': 0.33, 'top': 0.25}
-                PlayerSpot:
-                    id: player9
-                    size_hint: card_size_hint
-                    pos_hint: {'right': 0.33,'top': 0.5}
-                PlayerSpot:
-                    id: player10
-                    size_hint: card_size_hint
-                    pos_hint: {'right': 0.33,'top': 0.75}
-                PlayerSpot:
-                    id: player1
-                    size_hint: card_size_hint
-                    pos_hint: {'right': 0.33,'top': 1.0}
-                MDBoxLayout:
-                    orientation: "vertical"
-                    pos_hint: {'center_x': 0.53,'center_y': 0.55}
-                    size_hint: 0.25, 0.25
-                    spacing: dp(5)
-                    MDLabel:
-                        markup: True
-                        text: "[b]Wild Card:[/b]"
-                        font_style: "Subtitle1"
-                        size_hint: None, None
-                        size: self.texture_size
-                        text_size: None, None
-                        pos_hint: {'center_x': 0.5,'center_y': 0.0}
-                    MDAnchorLayout:
-                        Image:
-                            md_bg_color: 0/255, 170/255, 0/255, 1
-                            source: "images/2_of_clubs.png"
-                            allow_stretch: False
-                            size_hint: 0.75, 1.0
-                PlayerSpot:
-                    id: player7
-                    size_hint: card_size_hint
-                    pos_hint: {'right': 0.66, 'top': 0.25}
-                PlayerSpot:
-                    id: player2
-                    size_hint: card_size_hint
-                    pos_hint: {'right': 0.66, 'top': 1.0}
-                PlayerSpot:
-                    id: player6
-                    size_hint: card_size_hint
-                    pos_hint: {'right': 1.0, 'top': 0.25}
-                PlayerSpot:
-                    id: player5
-                    size_hint: card_size_hint
-                    pos_hint: {'right': 1.0, 'top': 0.5}
-                PlayerSpot:
-                    id: player4
-                    size_hint: card_size_hint
-                    pos_hint: {'right': 1.0, 'top': 0.75}
-                PlayerSpot:
-                    id: player3
-                    size_hint: card_size_hint
-                    pos_hint: {'right': 1.0, 'top': 1.0}
-        Button:
-            text: "test"
-            color: 1, 0, 0, 1
-            size_hint: 1, 0.2
+        TopWindowMenu:
+            id: top_win_menu
+            size_hint: 1, None
+            height: dp(70)
+        Table:
+            id: table
+        PlayerHand:
+            id: player_hand
+            size_hint: 1, None
+            height: dp(200)
 
+
+<PlayerHand>:
+    Button:
+        text: "test"
+        color: 1, 0, 0, 1
+        size_hint: 1, 1
+
+<Table>:
+    spacing: dp(20)
+    MDRelativeLayout:
+        PlayerSpot:
+            id: player8
+            size_hint: card_size_hint
+            pos_hint: {'right': 0.33, 'top': 0.25}
+        PlayerSpot:
+            id: player9
+            size_hint: card_size_hint
+            pos_hint: {'right': 0.33,'top': 0.5}
+        PlayerSpot:
+            id: player10
+            size_hint: card_size_hint
+            pos_hint: {'right': 0.33,'top': 0.75}
+        PlayerSpot:
+            id: player1
+            size_hint: card_size_hint
+            pos_hint: {'right': 0.33,'top': 1.0}
+        MDBoxLayout:
+            orientation: "vertical"
+            pos_hint: {'center_x': 0.53,'center_y': 0.55}
+            size_hint: 0.25, 0.25
+            spacing: dp(5)
+            MDLabel:
+                markup: True
+                text: "[b]Wild Card:[/b]"
+                font_style: "Subtitle1"
+                size_hint: None, None
+                size: self.texture_size
+                text_size: None, None
+                pos_hint: {'center_x': 0.5,'center_y': 0.0}
+            MDAnchorLayout:
+                Image:
+                    md_bg_color: 0/255, 170/255, 0/255, 1
+                    source: "images/2_of_clubs.png"
+                    allow_stretch: False
+                    size_hint: 0.75, 1.0
+        PlayerSpot:
+            id: player7
+            size_hint: card_size_hint
+            pos_hint: {'right': 0.66, 'top': 0.25}
+        PlayerSpot:
+            id: player2
+            size_hint: card_size_hint
+            pos_hint: {'right': 0.66, 'top': 1.0}
+        PlayerSpot:
+            id: player6
+            size_hint: card_size_hint
+            pos_hint: {'right': 1.0, 'top': 0.25}
+        PlayerSpot:
+            id: player5
+            size_hint: card_size_hint
+            pos_hint: {'right': 1.0, 'top': 0.5}
+        PlayerSpot:
+            id: player4
+            size_hint: card_size_hint
+            pos_hint: {'right': 1.0, 'top': 0.75}
+        PlayerSpot:
+            id: player3
+            size_hint: card_size_hint
+            pos_hint: {'right': 1.0, 'top': 1.0}
+
+<TopWindowMenu>:
+    orientation: "horizontal"
+    Button:
+        id: quit_btn
+        md_bg_color: [50/255,50/255,50/255,1]
+        text: 'X'
+        halign: "center"
+        valign: "center"
+        size_hint: None, None
+        height: dp(50)
+        width: dp(50)
+        pos_hint: {'right': 1.0,'center_y': 0.5}
+        color: [200/255,200/255,200/255,1]
         
 <PlayerSpot>:
     orientation: "vertical"

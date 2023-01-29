@@ -9,6 +9,8 @@ from kivy.properties import StringProperty, Clock, NumericProperty
 from kivy.metrics import dp
 from kivymd.uix.button import MDTextButton
 from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.relativelayout import MDRelativeLayout
+from kivymd.uix.anchorlayout import MDAnchorLayout
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.label import MDLabel
 from kivy.uix.label import Label
@@ -141,7 +143,6 @@ class Lobby(MDScreen):
         self.check_server_life_event.cancel()
         self.update_lobby_event.cancel()
 
-
     def on_leave_btn(self):
         global game_client
         global game_server
@@ -177,6 +178,7 @@ class Lobby(MDScreen):
             # print(game_client.game_state)
             self.manager.current = 'game_play'
 
+
 def check_server_life(screen):
     global server_thread
     global client_thread
@@ -189,15 +191,27 @@ def check_server_life(screen):
         client_thread.join()
         screen.manager.current = 'play_menu'
 
-class GamePlay(MDScreen):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.exit_popup = ExitGamePopup()
-        self.exit_popup.ids['exit_btn'].bind(on_release=self.on_exit_btn_popup)
 
-    def on_pre_enter(self, *args):
+class GamePlay(MDScreen):
+    def on_enter(self, *args):
+        super().on_enter(*args)
+        self.check_server_life_event = Clock.schedule_interval(
+            lambda dt: check_server_life(self), 1)
+        self.ids.top_win_menu.set_menu()
+        self.ids.table.update_table_view()
+
+    def on_leave(self, *args):
+        super().on_leave(*args)
+        self.check_server_life_event.cancel()
+
+
+class ExitGamePopup(Popup):
+    pass
+
+
+class Table(MDAnchorLayout):
+    def update_table_view(self, *args):
         global game_client
-        super().on_pre_enter(*args)
         num_players = len(game_client.game_status.players_list)
 
         # Write player names
@@ -206,14 +220,16 @@ class GamePlay(MDScreen):
                      str(i+1)].name = game_client.game_status.players_list[i]
         for i in range(num_players, 10):
             self.ids["player" +
-                     str(i+1)].name = ""
+                     str(i+1)].name = "..."
 
-    def on_enter(self, *args):
-        super().on_enter(*args)
-        self.check_server_life_event = Clock.schedule_interval(
-            lambda dt: check_server_life(self), 1)
 
-    def on_exit_btn(self):
+class TopWindowMenu(MDRelativeLayout):
+    def set_menu(self):
+        self.exit_popup = ExitGamePopup()
+        self.exit_popup.ids['exit_btn'].bind(on_release=self.on_exit_btn_popup)
+        self.ids['quit_btn'].bind(on_release=self.on_exit_btn)
+
+    def on_exit_btn(self, intance):
         self.exit_popup.open()
 
     def on_exit_btn_popup(self, instance):
@@ -230,14 +246,10 @@ class GamePlay(MDScreen):
             game_client.close_client = True
             client_thread.join()
         self.exit_popup.dismiss()
-        self.manager.current = 'play_menu'
-            
-    def on_leave(self, *args):
-        super().on_leave(*args)
-        self.check_server_life_event.cancel()
+        # self.manager.current = 'play_menu'
 
 
-class ExitGamePopup(Popup):
+class PlayerHand(MDBoxLayout):
     pass
 
 
