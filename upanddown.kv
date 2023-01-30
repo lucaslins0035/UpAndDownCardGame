@@ -1,3 +1,7 @@
+########################################################################
+#   SCREENS
+########################################################################
+
 <PlayMenu>:
     name: "play_menu"
     md_bg_color: [0/255,170/255,0/255,1]
@@ -141,6 +145,65 @@
             size_hint: 1, None
             height: dp(200)
 
+<Betting>:
+    name: "betting"
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: 0/255, 170/255, 0/255, 1
+        spacing: dp(10)
+        padding: dp(10)
+        TopWindowMenu:
+            id: top_win_menu
+            size_hint: 1, None
+            height: dp(70)
+        MDAnchorLayout:
+            MDCard:
+                md_bg_color: 100/255, 100/255, 100/255, 1
+                size_hint: 0.9, 0.9
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDScrollView:
+                        MDList:
+                            id: betting_list
+                    MDBoxLayout:
+                        size_hint: 1, None
+                        height: wild_card_label.height + wild_card_img.height + dp(20)
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            spacing:dp(10)
+                            padding: dp(10)
+                            MDLabel:
+                                id: wild_card_label
+                                markup: True
+                                text: "[b]Wild Card:[/b]"
+                                font_style: "Subtitle1"
+                                height: dp(40)
+                                size_hint: 1, None
+                                halign: "center"
+                            Image:
+                                id: wild_card_img
+                                source: "images/2_of_clubs.png"
+                                allow_stretch: False
+                                size_hint: 0.75, None
+                                height: dp(150)
+                                pos_hint: {'center_x': 0.5,'center_y': 0.5}
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            size_hint: 1, None
+                            height: wild_card_label.height + wild_card_img.height
+                            spacing:dp(10)
+                            padding: dp(10)
+                            Button:
+                                id: drop_down_btn
+                            Button:
+                                text: "Confirm"
+        PlayerHand:
+            id: player_hand
+            size_hint: 1, None
+            height: dp(200)
+########################################################################
+#   PARTS OF SCREENS
+########################################################################
 
 <PlayerHand>:
     Button:

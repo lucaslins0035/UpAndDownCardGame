@@ -7,17 +7,19 @@ Config.set('graphics', 'height', '1080')  # noqa
 
 from kivy.properties import StringProperty, Clock, NumericProperty
 from kivy.metrics import dp
-from kivymd.uix.button import MDTextButton
+from kivy.uix.button import Button
+from kivy.uix.dropdown import DropDown
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.relativelayout import MDRelativeLayout
 from kivymd.uix.anchorlayout import MDAnchorLayout
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.label import MDLabel
-from kivy.uix.label import Label
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.screenmanager import MDScreenManager
-from kivy.uix.popup import Popup
 from kivymd.app import MDApp
+from kivymd.uix.list import OneLineListItem
 
 from gameServer import GameServer
 from namings import *
@@ -25,6 +27,10 @@ from gameclient import GameClient
 
 game_server = GameServer('127.0.0.1', 7777)
 game_client = GameClient('127.0.0.1', 7777)
+
+########################################################################
+#   SCREENS
+########################################################################
 
 
 class PlayMenu(MDScreen):
@@ -179,19 +185,6 @@ class Lobby(MDScreen):
             self.manager.current = 'game_play'
 
 
-def check_server_life(screen):
-    global server_thread
-    global client_thread
-    print("Check server")
-
-    client_thread.join(0.1)
-
-    if not client_thread.is_alive() and screen.manager.current in ['lobby', 'game_play']:
-        game_client.close_client = True
-        client_thread.join()
-        screen.manager.current = 'play_menu'
-
-
 class GamePlay(MDScreen):
     def on_enter(self, *args):
         super().on_enter(*args)
@@ -203,6 +196,38 @@ class GamePlay(MDScreen):
     def on_leave(self, *args):
         super().on_leave(*args)
         self.check_server_life_event.cancel()
+
+
+a = ["Lucas", "bia", "Licia"]
+b = 15
+class Betting(MDScreen):
+    drop_down = DropDown()
+    def on_enter(self, *args):
+        super().on_enter(*args)
+        global game_client
+        # self.check_server_life_event = Clock.schedule_interval(
+        #     lambda dt: check_server_life(self), 1)
+        self.ids.top_win_menu.set_menu()
+        # a = ["Lucas", "bia", "Lucas", "bia", "Lucas", "bia", "Lucas", "bia", "Lucas", "bia"]
+        for name in a:
+            self.ids.betting_list.add_widget(OneLineListItem(text=name, bg_color=(1,1,1,1)))
+
+        self.drop_down.clear_widgets()
+        for i in range(b):
+            btn = Button(text="{}".format(i), size_hint_y=None, height=44)
+            btn.bind(on_release=lambda btn: self.drop_down.select(int(btn.text)))
+            self.drop_down.add_widget(btn)
+        
+        self.ids.drop_down_btn.bind(on_release=self.drop_down.open)
+        self.drop_down.bind(on_select=lambda instance, x: setattr(self.ids.drop_down_btn, "text", str(x)))
+    
+    def on_leave(self, *args):
+        super().on_leave(*args)
+        # self.check_server_life_event.cancel()
+
+########################################################################
+#   PARTS OF SCREENS
+########################################################################
 
 
 class ExitGamePopup(Popup):
@@ -260,11 +285,33 @@ class PlayerSpot(MDBoxLayout):
     card = StringProperty("images/empty_card.png")
     # TODO method change card
 
+########################################################################
+#   GENERAL FUNCTIONS
+########################################################################
+
+
+def check_server_life(screen):
+    global server_thread
+    global client_thread
+    print("Check server")
+
+    client_thread.join(0.1)
+
+    if not client_thread.is_alive() and screen.manager.current in ['lobby', 'game_play']:
+        game_client.close_client = True
+        client_thread.join()
+        screen.manager.current = 'play_menu'
+
+
+########################################################################
+#   APP
+########################################################################
 
 class UpAndDownApp(MDApp):
     def build(self):
         # Create the screen manager
         sm = MDScreenManager()
+        sm.add_widget(Betting(name="betting"))
         sm.add_widget(PlayMenu(name="play_menu"))
         sm.add_widget(Lobby(name="lobby"))
         sm.add_widget(GamePlay(name="game_play"))
