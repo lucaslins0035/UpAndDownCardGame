@@ -72,7 +72,7 @@ class GameServer():
                             if message.sock is None:
                                 self.remove_player(
                                     str(message.addr))
-                                if self.game_state == GAME:
+                                if self.game_state == GAME:  # If a player leaves during the game
                                     self.game_status.valid_game = False
                                     self.close_server = True
 
@@ -103,7 +103,7 @@ class GameServer():
                 self.game_status.valid_game = message.read_msg.start_game
                 if self.game_status.valid_game:
                     self.game_state = GAME
-                    # print("STARTING GAME")
+                    self.game_status.init_game_data()
         else:
             pass
             # print(str(time.time()) + "GAME STARTED")

@@ -5,7 +5,7 @@ from kivy.config import Config  # noqa
 Config.set('graphics', 'width', '498')  # noqa
 Config.set('graphics', 'height', '1080')  # noqa
 
-from kivy.properties import StringProperty, Clock, NumericProperty
+from kivy.properties import StringProperty, Clock, NumericProperty, ObjectProperty
 from kivy.metrics import dp
 from kivy.uix.button import Button
 from kivy.uix.dropdown import DropDown
@@ -182,7 +182,7 @@ class Lobby(MDScreen):
         # Check start game
         if game_client.game_state == GAME:
             # print(game_client.game_state)
-            self.manager.current = 'game_play'
+            self.manager.current = game_client.game_status.screen
 
 
 class GamePlay(MDScreen):
@@ -198,32 +198,62 @@ class GamePlay(MDScreen):
         self.check_server_life_event.cancel()
 
 
-a = ["Lucas", "bia", "Licia"]
-b = 15
 class Betting(MDScreen):
     drop_down = DropDown()
+
     def on_enter(self, *args):
         super().on_enter(*args)
         global game_client
-        # self.check_server_life_event = Clock.schedule_interval(
-        #     lambda dt: check_server_life(self), 1)
+        self.check_server_life_event = Clock.schedule_interval(
+            lambda dt: check_server_life(self), 1)
         self.ids.top_win_menu.set_menu()
-        # a = ["Lucas", "bia", "Lucas", "bia", "Lucas", "bia", "Lucas", "bia", "Lucas", "bia"]
-        for name in a:
-            self.ids.betting_list.add_widget(OneLineListItem(text=name, bg_color=(1,1,1,1)))
+        for name in game_client.game_status.players_list:
+            self.ids.betting_list.add_widget(
+                OneLineListItem(text=name + ": ...", bg_color=(1, 1, 1, 1)))
 
+        # Create drop down betting menu
         self.drop_down.clear_widgets()
-        for i in range(b):
+        for i in range(game_client.game_status.round_num + 1):
             btn = Button(text="{}".format(i), size_hint_y=None, height=44)
             btn.bind(on_release=lambda btn: self.drop_down.select(int(btn.text)))
             self.drop_down.add_widget(btn)
-        
+
         self.ids.drop_down_btn.bind(on_release=self.drop_down.open)
-        self.drop_down.bind(on_select=lambda instance, x: setattr(self.ids.drop_down_btn, "text", str(x)))
-    
+        self.drop_down.bind(on_select=lambda instance, x: setattr(
+            self.ids.drop_down_btn, "text", str(x)))
+
+        self.update_betting_screen_event = Clock.schedule_interval(
+            lambda dt: self.update_betting_screen(), 0.25)
+
     def on_leave(self, *args):
         super().on_leave(*args)
-        # self.check_server_life_event.cancel()
+        self.check_server_life_event.cancel()
+
+    def on_confirm_btn(self, instance):
+        game_client.player_status.current_bet = int(
+            self.ids.drop_down_btn.text)
+        self.ids.drop_down_btn.disabled = True
+        self.ids.confirm_btn.disabled = True
+        game_client.player_status.playing = False
+
+    def update_betting_screen(self):
+
+        # Update betting list
+        for i, name in enumerate(game_client.game_status.players_list):
+            current_bet = game_client.game_status.player_data[name]["current_bet"]
+            bet_str = str(current_bet) if current_bet is not None else "..."
+            self.ids.betting_list.children[i].text = name + ": " + bet_str
+
+        # Update button status
+        if game_client.player_status.playing:
+            self.ids.drop_down_btn.disabled = False
+
+            if self.ids.drop_down_btn.text != "Choose your bet":
+                self.ids.confirm_btn.disabled = False
+        else:
+            self.ids.drop_down_btn.disabled = True
+            self.ids.confirm_btn.disabled = True
+
 
 ########################################################################
 #   PARTS OF SCREENS
@@ -293,11 +323,10 @@ class PlayerSpot(MDBoxLayout):
 def check_server_life(screen):
     global server_thread
     global client_thread
-    print("Check server")
 
     client_thread.join(0.1)
 
-    if not client_thread.is_alive() and screen.manager.current in ['lobby', 'game_play']:
+    if not client_thread.is_alive() and screen.manager.current in ['lobby', 'game_play', "betting"]:
         game_client.close_client = True
         client_thread.join()
         screen.manager.current = 'play_menu'
@@ -311,10 +340,10 @@ class UpAndDownApp(MDApp):
     def build(self):
         # Create the screen manager
         sm = MDScreenManager()
-        sm.add_widget(Betting(name="betting"))
         sm.add_widget(PlayMenu(name="play_menu"))
         sm.add_widget(Lobby(name="lobby"))
         sm.add_widget(GamePlay(name="game_play"))
+        sm.add_widget(Betting(name="betting"))
         return sm
 
 
