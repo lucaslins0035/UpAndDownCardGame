@@ -49,6 +49,7 @@ class GameServer():
         try:
             self.server_sock.bind((self.server_ip, self.server_port))
         except:
+            print("Not able to use this Address")
             return
         self.server_sock.listen()
         print(f"Listening on {(self.server_ip, self.server_port)}")
@@ -71,9 +72,12 @@ class GameServer():
                             message.close()
                         else:
                             if message.sock is None:
-                                self.remove_player(
-                                    str(message.addr))
-                                if self.game_state != LOBBY:  # If a player leaves during the game
+                                # If the player has been registered
+                                if str(message.addr) in self.players_reg.keys():
+                                    self.remove_player(str(message.addr))
+
+                                # If a player leaves during the game
+                                if self.game_state != LOBBY:
                                     self.game_status.valid_game = False
                                     self.close_server = True
 
@@ -96,8 +100,11 @@ class GameServer():
     def update_status(self, message):
         if self.game_state == LOBBY:
             if str(message.addr) not in self.players_reg.keys():
-                self.add_player(
-                    message.read_msg.name, str(message.addr))
+                if message.read_msg.name not in self.players_reg.values():
+                    self.add_player(
+                        message.read_msg.name, str(message.addr))
+                else:
+                    message.close()
 
             if not self.game_status.valid_game:
                 self.game_status.valid_game = message.read_msg.start_game

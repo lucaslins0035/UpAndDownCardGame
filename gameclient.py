@@ -54,6 +54,7 @@ class GameClient():
                         message.close()
                     else:
                         if message.sock is None:
+                            print("Not possible to enter this room!")
                             break
                         else:
                             if mask == selectors.EVENT_READ:

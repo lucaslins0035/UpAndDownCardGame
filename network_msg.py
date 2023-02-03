@@ -73,9 +73,9 @@ class Message:
             if len(self._recv_buffer) >= self.header:
                 self.process_read_msg()
                 self.header = None
+                self._set_selector_events_mask("w")
                 self.deliver_read_msg_callback()
                 self.read_msg = None
-                self._set_selector_events_mask("w")
 
     def write(self):
         if (self.write_msg_payload is not None and
