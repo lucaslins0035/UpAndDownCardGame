@@ -113,7 +113,9 @@ class GameServer():
                     self.game_status.init_game_data()
                     self.game_manager = GameManager(
                         self.game_status.players_list)
+
                     self.game_manager.setup_next_round()
+                    self.game_status.current_wild_card = self.game_manager.current_wild_card
                     self.game_status.update_player_data(
                         self.game_manager.current_hands,
                         self.game_manager.current_playing_index,

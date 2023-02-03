@@ -34,6 +34,7 @@ class GameStatus():
         self.round_num = 1
         self.state = BETTING
         self.screen = "betting"
+        self.current_wild_card = None
 
     def update_player_data(self, hands, current_player, playing_order):
         for player in self.players_list:
@@ -44,5 +45,5 @@ class GameStatus():
 
         for name, hand in hands.items():
             self.player_data[name]['current_hand'] = hand
-            
+
         self.playing_order = playing_order

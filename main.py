@@ -222,8 +222,6 @@ class Betting(MDScreen):
         self.ids.top_win_menu.set_menu()
         self.ids.player_hand.set_hand()
 
-    def on_enter(self, *args):
-        super().on_enter(*args)
         global game_client
 
         # Create betting list
@@ -245,6 +243,12 @@ class Betting(MDScreen):
         self.drop_down.bind(on_select=lambda instance, x: setattr(
             self.ids.drop_down_btn, "text", str(x)))
         self.ids.confirm_btn.bind(on_release=self.on_confirm_btn)
+
+        self.ids.wild_card_img.source = get_card_img_path(
+            game_client.game_status.current_wild_card[0].name)
+
+    def on_enter(self, *args):
+        super().on_enter(*args)
 
         # Initiate events
         self.check_server_life_event = Clock.schedule_interval(
@@ -340,7 +344,7 @@ class PlayerHand(MDScrollView):
         width = 0
         for card in game_client.game_status.player_data[game_client.name]["current_hand"]:
             md_card_anchorl = MDAnchorLayout()
-            card_img = Image(source=self.convert_card_name(card.name))
+            card_img = Image(source=get_card_img_path(card.name))
             md_card_anchorl.add_widget(card_img)
 
             md_card = MDCard(size_hint=(1, 1), md_bg_color=(0, 0, 0, 0))
@@ -351,9 +355,6 @@ class PlayerHand(MDScrollView):
             width = width + md_card.width
 
         self.ids.box_layout.width = width
-
-    def convert_card_name(self, name):
-        return "images/" + name.casefold().replace(" ", "_") + ".png"
 
 
 class PlayerSpot(MDBoxLayout):
@@ -380,9 +381,13 @@ def check_server_life(screen):
         screen.manager.current = 'play_menu'
 
 
+def get_card_img_path(name):
+    return "images/" + name.casefold().replace(" ", "_") + ".png"
+
 ########################################################################
 #   APP
 ########################################################################
+
 
 class UpAndDownApp(MDApp):
     def build(self):
