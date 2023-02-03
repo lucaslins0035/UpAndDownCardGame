@@ -196,21 +196,33 @@ class Lobby(MDScreen):
             self.players_list[i].text = self.write_list_name(i, ". . .")
 
         # Check start game
-        if game_client.game_state != LOBBY:
+        if game_client.game_status.state != LOBBY:
             self.manager.current = game_client.game_status.screen
 
 
 class GamePlay(MDScreen):
+    def on_pre_enter(self, *args):
+        super().on_pre_enter(*args)
+        self.ids.top_win_menu.set_menu()
+        self.ids.table.update_table_view()
+        self.ids.player_hand.update_player_hand()
+
     def on_enter(self, *args):
         super().on_enter(*args)
         self.check_server_life_event = Clock.schedule_interval(
             lambda dt: check_server_life(self), 1)
-        self.ids.top_win_menu.set_menu()
-        self.ids.table.update_table_view()
+        self.update_gameplay_screen_event = Clock.schedule_interval(
+            lambda dt: self.update_gameplay_screen(), 0.2)
 
     def on_leave(self, *args):
         super().on_leave(*args)
         self.check_server_life_event.cancel()
+        self.update_gameplay_screen_event.cancel()
+        
+    def update_gameplay_screen(self):
+        self.ids.table.update_table_view()
+        self.ids.player_hand.update_player_hand()
+        
 
 
 class Betting(MDScreen):
@@ -220,7 +232,7 @@ class Betting(MDScreen):
         super().on_pre_enter(*args)
         # Setup sub screens
         self.ids.top_win_menu.set_menu()
-        self.ids.player_hand.set_hand()
+        self.ids.player_hand.update_player_hand()
 
         global game_client
 
@@ -290,6 +302,10 @@ class Betting(MDScreen):
             self.ids.drop_down_btn.disabled = True
             self.ids.confirm_btn.disabled = True
 
+        # Check start round
+        if game_client.game_status.state != BETTING:
+            self.manager.current = game_client.game_status.screen
+
 
 ########################################################################
 #   PARTS OF SCREENS
@@ -301,7 +317,7 @@ class ExitGamePopup(Popup):
 
 
 class Table(MDAnchorLayout):
-    def update_table_view(self, *args):
+    def update_table_view(self):
         global game_client
         num_players = len(game_client.game_status.players_list)
 
@@ -340,7 +356,7 @@ class TopWindowMenu(MDRelativeLayout):
 
 
 class PlayerHand(MDScrollView):
-    def set_hand(self):
+    def update_player_hand(self):
         width = 0
         for card in game_client.game_status.player_data[game_client.name]["current_hand"]:
             md_card_anchorl = MDAnchorLayout()

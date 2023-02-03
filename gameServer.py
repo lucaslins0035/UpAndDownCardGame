@@ -24,12 +24,11 @@ class GameServer():
         self.server_ip = ip
         self.server_port = port
         self.close_server = False
-        self.game_state = LOBBY
         self.game_status = GameStatus()
 
     def evaluate_connection(self, sock):
         conn, addr = sock.accept()
-        if self.game_state == LOBBY:  # No more players allowed during the game
+        if self.game_status.state == LOBBY:  # No more players allowed during the game
             print(f"Accepted connection from {addr}")
             conn.setblocking(False)
             message = Message(self.sel, conn, addr)
@@ -77,7 +76,7 @@ class GameServer():
                                     self.remove_player(str(message.addr))
 
                                 # If a player leaves during the game
-                                if self.game_state != LOBBY:
+                                if self.game_status.state != LOBBY:
                                     self.game_status.valid_game = False
                                     self.close_server = True
 
@@ -98,7 +97,7 @@ class GameServer():
         self.game_status.update_list(self.players_reg)
 
     def update_status(self, message):
-        if self.game_state == LOBBY:
+        if self.game_status.state == LOBBY:
             if str(message.addr) not in self.players_reg.keys():
                 if message.read_msg.name not in self.players_reg.values():
                     self.add_player(
@@ -120,18 +119,15 @@ class GameServer():
                         self.game_manager.current_hands,
                         self.game_manager.current_playing_index,
                         self.game_manager.current_playing_order)
-                    self.game_state = self.game_status.state
 
-        elif self.game_state == BETTING:
+        elif self.game_status.state == BETTING:
             if self.game_status.player_data[message.read_msg.name]["playing"]:
                 if message.read_msg.current_bet is not None:
                     self.game_status.player_data[message.read_msg.name]["current_bet"] = message.read_msg.current_bet
                     self.game_manager.pass_turn()
                     if self.game_manager.current_playing_index is None:  # If there is no one left to bet
-                        print("START PLAYING THIS ROUND")
-                        # TODO Evaluate redundance in these two vars
-                        self.game_state = PLAYING
                         self.game_status.state = PLAYING
+                        self.game_status.screen = "game_play"
                     else:
                         self.game_status.update_player_data(
                             self.game_manager.current_hands,

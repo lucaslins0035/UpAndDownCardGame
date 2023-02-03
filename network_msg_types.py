@@ -18,6 +18,7 @@ class GameStatus():
         self.current_hand = Stack()
         self.init_player_index = -1
         self.playing_order = []
+        self.state = LOBBY
 
     def update_list(self, reg):
         self.players_list = [name for name in reg.values()]

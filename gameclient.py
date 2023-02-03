@@ -18,7 +18,6 @@ class GameClient():
         self.server_ip = ip
         self.server_port = port
         self.close_client = False
-        self.game_state = LOBBY
         self.name = ""
         self.player_status = PlayerStatus()
         self.game_status = GameStatus()
@@ -74,13 +73,11 @@ class GameClient():
         self.name = name
 
     def update_status(self, message):
-        if self.game_state == LOBBY:
+        # TODO: Evaluate need to ad if statements here
+        if self.game_status.state == LOBBY:
             self.game_status = message.read_msg
-            if self.game_status.valid_game:
-                self.game_state = self.game_status.state
 
-        elif self.game_state == BETTING:
+        elif self.game_status.state == BETTING:
             self.game_status = message.read_msg
-            # self.player_status.playing = self.game_status.player_data[self.name]["playing"]
         else:
             print("Client: Start playing!!")
