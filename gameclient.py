@@ -57,7 +57,7 @@ class GameClient():
                             break
                         else:
                             if mask == selectors.EVENT_READ:
-                                time.sleep(0.25)
+                                time.sleep(0.2)
                 # Check for a socket being monitored to continue.
                 if not self.sel.get_map():
                     break
@@ -75,10 +75,11 @@ class GameClient():
     def update_status(self, message):
         if self.game_state == LOBBY:
             self.game_status = message.read_msg
-            # print(str(time.time()) + " - Client got: " +
-            #       str(self.game_status.players_list))
             if self.game_status.valid_game:
-                self.game_state = GAME
-        elif self.game_state == GAME:
+                self.game_state = self.game_status.state
+
+        elif self.game_state == BETTING:
             self.game_status = message.read_msg
-            # print(str(time.time()) + "CLIENT: game started")
+            # self.player_status.playing = self.game_status.player_data[self.name]["playing"]
+        else:
+            print("Client: Start playing!!")

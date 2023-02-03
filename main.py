@@ -37,65 +37,77 @@ class PlayMenu(MDScreen):
     warning_text = StringProperty("")
 
     def on_create_room(self):
-        if self.ids.name_input.text == "" or self.ids.name_input.error:
-            self.ids.name_input.error = True
-        elif self.ids.ip_input.text == "":
-            self.ids.ip_input.error = True
-        elif self.ids.port_input.text == "":
-            self.ids.port_input.error = True
-        else:
-            global game_server
-            game_server = GameServer(
-                self.ids.ip_input.text, int(self.ids.port_input.text))
+        # TODO revert every commit
+        # if self.ids.name_input.text == "" or self.ids.name_input.error:
+        #     self.ids.name_input.error = True
+        # elif self.ids.ip_input.text == "":
+        #     self.ids.ip_input.error = True
+        # elif self.ids.port_input.text == "":
+        #     self.ids.port_input.error = True
+        # else:
 
-            global game_client
-            game_client = GameClient(
-                self.ids.ip_input.text, int(self.ids.port_input.text))
-            game_client.type = HOST
+        self.ids.name_input.text = "Lucas"
+        self.ids.ip_input.text = "127.0.0.1"
+        self.ids.port_input.text = "7777"
 
-            global server_thread
-            server_thread = threading.Thread(
-                target=game_server.run, daemon=True)
+        global game_server
+        game_server = GameServer(
+            self.ids.ip_input.text, int(self.ids.port_input.text))
 
-            global client_thread
-            client_thread = threading.Thread(
-                target=game_client.run, daemon=True)
+        global game_client
+        game_client = GameClient(
+            self.ids.ip_input.text, int(self.ids.port_input.text))
+        game_client.type = HOST
 
-            server_thread.start()
-            server_thread.join(0.2)
+        global server_thread
+        server_thread = threading.Thread(
+            target=game_server.run, daemon=True)
 
-            if server_thread.is_alive():
-                game_client.set_name(self.ids.name_input.text)
-                client_thread.start()
-                self.manager.current = 'lobby'
-            else:
-                self.warning_text = "Address already in use"
+        global client_thread
+        client_thread = threading.Thread(
+            target=game_client.run, daemon=True)
 
-    def on_enter_room(self):
-        if self.ids.name_input.text == "" or self.ids.name_input.error:
-            self.ids.name_input.error = True
-        elif self.ids.ip_input.text == "":
-            self.ids.ip_input.error = True
-        elif self.ids.port_input.text == "":
-            self.ids.port_input.error = True
-        else:
-            global game_client
-            game_client = GameClient(
-                self.ids.ip_input.text, int(self.ids.port_input.text))
-            game_client.type = CLIENT
+        server_thread.start()
+        server_thread.join(0.2)
 
-            global client_thread
-            client_thread = threading.Thread(
-                target=game_client.run, daemon=True)
-
+        if server_thread.is_alive():
             game_client.set_name(self.ids.name_input.text)
             client_thread.start()
-            client_thread.join(0.2)
+            self.manager.current = 'lobby'
+        else:
+            self.warning_text = "Address already in use"
 
-            if client_thread.is_alive():
-                self.manager.current = 'lobby'
-            else:
-                self.warning_text = "There is no server running with this address"
+    def on_enter_room(self):
+        # if self.ids.name_input.text == "" or self.ids.name_input.error:
+        #     self.ids.name_input.error = True
+        # elif self.ids.ip_input.text == "":
+        #     self.ids.ip_input.error = True
+        # elif self.ids.port_input.text == "":
+        #     self.ids.port_input.error = True
+        # else:
+
+        self.ids.name_input.text = "Bia"
+        self.ids.ip_input.text = "127.0.0.1"
+        self.ids.port_input.text = "7777"
+
+        global game_client
+        game_client = GameClient(
+            self.ids.ip_input.text, int(self.ids.port_input.text))
+        game_client.type = CLIENT
+
+        game_client.set_name(self.ids.name_input.text)
+
+        global client_thread
+        client_thread = threading.Thread(
+            target=game_client.run, daemon=True)
+
+        client_thread.start()
+        client_thread.join(0.2)
+
+        if client_thread.is_alive():
+            self.manager.current = 'lobby'
+        else:
+            self.warning_text = "There is no server running with this address"
 
 
 class Lobby(MDScreen):
@@ -180,8 +192,7 @@ class Lobby(MDScreen):
             self.players_list[i].text = self.write_list_name(i, ". . .")
 
         # Check start game
-        if game_client.game_state == GAME:
-            # print(game_client.game_state)
+        if game_client.game_state != LOBBY:
             self.manager.current = game_client.game_status.screen
 
 
@@ -204,12 +215,17 @@ class Betting(MDScreen):
     def on_enter(self, *args):
         super().on_enter(*args)
         global game_client
-        self.check_server_life_event = Clock.schedule_interval(
-            lambda dt: check_server_life(self), 1)
+
+        # Setup sub screens
         self.ids.top_win_menu.set_menu()
-        for name in game_client.game_status.players_list:
-            self.ids.betting_list.add_widget(
-                OneLineListItem(text=name + ": ...", bg_color=(1, 1, 1, 1)))
+
+        # Create betting list
+        for i in game_client.game_status.playing_order:
+            list_item = OneLineListItem(id=game_client.game_status.players_list[i],
+                                        text=game_client.game_status.players_list[i] + ": ...")
+            self.ids.betting_list.add_widget(list_item)
+            self.ids.update(
+                {game_client.game_status.players_list[i]: list_item})
 
         # Create drop down betting menu
         self.drop_down.clear_widgets()
@@ -221,33 +237,42 @@ class Betting(MDScreen):
         self.ids.drop_down_btn.bind(on_release=self.drop_down.open)
         self.drop_down.bind(on_select=lambda instance, x: setattr(
             self.ids.drop_down_btn, "text", str(x)))
+        self.ids.confirm_btn.bind(on_release=self.on_confirm_btn)
 
+        # Initiate events
+        self.check_server_life_event = Clock.schedule_interval(
+            lambda dt: check_server_life(self), 1)
         self.update_betting_screen_event = Clock.schedule_interval(
-            lambda dt: self.update_betting_screen(), 0.25)
+            lambda dt: self.update_betting_screen(), 0.2)
 
     def on_leave(self, *args):
         super().on_leave(*args)
         self.check_server_life_event.cancel()
+        self.update_betting_screen_event.cancel()
 
     def on_confirm_btn(self, instance):
         game_client.player_status.current_bet = int(
             self.ids.drop_down_btn.text)
-        self.ids.drop_down_btn.disabled = True
-        self.ids.confirm_btn.disabled = True
-        game_client.player_status.playing = False
 
     def update_betting_screen(self):
-
         # Update betting list
-        for i, name in enumerate(game_client.game_status.players_list):
+        for player_index in game_client.game_status.playing_order:
+            name = game_client.game_status.players_list[player_index]
             current_bet = game_client.game_status.player_data[name]["current_bet"]
             bet_str = str(current_bet) if current_bet is not None else "..."
-            self.ids.betting_list.children[i].text = name + ": " + bet_str
+            self.ids[name].text = name + \
+                ": " + bet_str
+
+            if game_client.game_status.player_data[name]['playing']:
+                self.ids[name].bg_color = (1, 1, 1, 1)
+            else:
+                self.ids[name].bg_color = (1, 1, 1, 0)
 
         # Update button status
-        if game_client.player_status.playing:
+        if game_client.game_status.player_data[game_client.name]['playing'] and game_client.player_status.current_bet is None:
             self.ids.drop_down_btn.disabled = False
 
+            # Allow confirming bet only after choosing a valid one
             if self.ids.drop_down_btn.text != "Choose your bet":
                 self.ids.confirm_btn.disabled = False
         else:

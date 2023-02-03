@@ -2,7 +2,7 @@ from pydealer.deck import Deck
 from pydealer.stack import Stack
 
 
-class CardDeck():
+class Dealer():
     def __init__(self):
         self.deck = Deck()
         self.deck.shuffle()
@@ -73,3 +73,19 @@ class CardDeck():
             )
 
         return Stack(list=cards)
+    
+    def deal_cards(self, num_players, round):
+        if len(self.deck) != 52:
+            raise ValueError("Deck must be full to redistribute")
+
+        self.deck.shuffle()
+        
+        hands = [Stack() for _ in range(num_players)]
+        
+        for _ in range(round):
+            for p in range(num_players):
+                hands[p].add(self.deck.deal(1))
+                
+        self.wild_card = self.deck.deal(1)
+                
+        return tuple(hands), self.deck.deal(1)

@@ -1,4 +1,6 @@
 from namings import *
+from pydealer.stack import Stack
+
 
 class PlayerStatus():
     def __init__(self):
@@ -13,6 +15,9 @@ class GameStatus():
     def __init__(self):
         self.valid_game = False
         self.players_list = []
+        self.current_hand = Stack()
+        self.init_player_index = -1
+        self.playing_order = []
 
     def update_list(self, reg):
         self.players_list = [name for name in reg.values()]
@@ -25,7 +30,19 @@ class GameStatus():
                                             'current_bet': None,
                                             'card_played': None,
                                             'playing': False,
-                                            'init_player': False}})
+                                            'current_hand': Stack()}})
         self.round_num = 1
         self.state = BETTING
         self.screen = "betting"
+
+    def update_player_data(self, hands, current_player, playing_order):
+        for player in self.players_list:
+            if self.players_list[current_player] == player:
+                self.player_data[player]["playing"] = True
+            else:
+                self.player_data[player]["playing"] = False
+
+        for name, hand in hands.items():
+            self.player_data[name]['current_hand'] = hand
+            
+        self.playing_order = playing_order

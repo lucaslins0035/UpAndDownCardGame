@@ -5,6 +5,7 @@ import types
 from functools import partial
 
 from network_msg_types import GameStatus
+from game_manager import GameManager
 from network_msg import Message
 from namings import *
 
@@ -72,7 +73,7 @@ class GameServer():
                             if message.sock is None:
                                 self.remove_player(
                                     str(message.addr))
-                                if self.game_state == GAME:  # If a player leaves during the game
+                                if self.game_state != LOBBY:  # If a player leaves during the game
                                     self.game_status.valid_game = False
                                     self.close_server = True
 
@@ -97,13 +98,35 @@ class GameServer():
             if str(message.addr) not in self.players_reg.keys():
                 self.add_player(
                     message.read_msg.name, str(message.addr))
-                # print(str(time.time()) + " - Server got: " +
-                #       str(message.read_msg.name))
+
             if not self.game_status.valid_game:
                 self.game_status.valid_game = message.read_msg.start_game
+                # Check to init game
                 if self.game_status.valid_game:
-                    self.game_state = GAME
                     self.game_status.init_game_data()
+                    self.game_manager = GameManager(
+                        self.game_status.players_list)
+                    self.game_manager.setup_next_round()
+                    self.game_status.update_player_data(
+                        self.game_manager.current_hands,
+                        self.game_manager.current_playing_index,
+                        self.game_manager.current_playing_order)
+                    self.game_state = self.game_status.state
+
+        elif self.game_state == BETTING:
+            if self.game_status.player_data[message.read_msg.name]["playing"]:
+                if message.read_msg.current_bet is not None:
+                    self.game_status.player_data[message.read_msg.name]["current_bet"] = message.read_msg.current_bet
+                    self.game_manager.pass_turn()
+                    if self.game_manager.current_playing_index is None:  # If there is no one left to bet
+                        print("START PLAYING THIS ROUND")
+                        # TODO Evaluate redundance in these two vars
+                        self.game_state = PLAYING
+                        self.game_status.state = PLAYING
+                    else:
+                        self.game_status.update_player_data(
+                            self.game_manager.current_hands,
+                            self.game_manager.current_playing_index,
+                            self.game_manager.current_playing_order)
         else:
-            pass
-            # print(str(time.time()) + "GAME STARTED")
+            print("not implemented yet")
