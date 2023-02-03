@@ -210,10 +210,13 @@
 ########################################################################
 
 <PlayerHand>:
-    Button:
-        text: "test"
-        color: 1, 0, 0, 1
-        size_hint: 1, 1
+    do_scroll_y: False
+    do_scroll_x: True
+    MDBoxLayout:
+        id: box_layout
+        orientation: "horizontal"
+        spacing: dp(5)
+        size_hint: None, 1
 
 <Table>:
     spacing: dp(20)

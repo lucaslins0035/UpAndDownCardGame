@@ -11,7 +11,9 @@ from kivy.uix.button import Button
 from kivy.uix.dropdown import DropDown
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
+from kivy.uix.image import Image
 from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.relativelayout import MDRelativeLayout
 from kivymd.uix.anchorlayout import MDAnchorLayout
 from kivymd.uix.gridlayout import MDGridLayout
@@ -20,6 +22,7 @@ from kivymd.uix.screen import MDScreen
 from kivymd.uix.screenmanager import MDScreenManager
 from kivymd.app import MDApp
 from kivymd.uix.list import OneLineListItem
+from kivymd.uix .card import MDCard
 
 from gameServer import GameServer
 from namings import *
@@ -86,7 +89,8 @@ class PlayMenu(MDScreen):
         #     self.ids.port_input.error = True
         # else:
 
-        self.ids.name_input.text = "Bia"
+        import names
+        self.ids.name_input.text = names.get_first_name()
         self.ids.ip_input.text = "127.0.0.1"
         self.ids.port_input.text = "7777"
 
@@ -121,7 +125,7 @@ class Lobby(MDScreen):
         for i in range(10):
             self.players_list.append(
                 Label(text=self.write_list_name(i, ". . ."),
-                      font_size=50,
+                      font_size=40,
                       halign="center",
                       valign="center",
                       font_name="fonts/refik/RefikBook.ttf",
@@ -212,12 +216,15 @@ class GamePlay(MDScreen):
 class Betting(MDScreen):
     drop_down = DropDown()
 
+    def on_pre_enter(self, *args):
+        super().on_pre_enter(*args)
+        # Setup sub screens
+        self.ids.top_win_menu.set_menu()
+        self.ids.player_hand.set_hand()
+
     def on_enter(self, *args):
         super().on_enter(*args)
         global game_client
-
-        # Setup sub screens
-        self.ids.top_win_menu.set_menu()
 
         # Create betting list
         for i in game_client.game_status.playing_order:
@@ -326,11 +333,27 @@ class TopWindowMenu(MDRelativeLayout):
             game_client.close_client = True
             client_thread.join()
         self.exit_popup.dismiss()
-        # self.manager.current = 'play_menu'
 
 
-class PlayerHand(MDBoxLayout):
-    pass
+class PlayerHand(MDScrollView):
+    def set_hand(self):
+        width = 0
+        for card in game_client.game_status.player_data[game_client.name]["current_hand"]:
+            md_card_anchorl = MDAnchorLayout()
+            card_img = Image(source=self.convert_card_name(card.name))
+            md_card_anchorl.add_widget(card_img)
+
+            md_card = MDCard(size_hint=(1, 1), md_bg_color=(0, 0, 0, 0))
+            md_card.add_widget(md_card_anchorl)
+
+            self.ids.box_layout.add_widget(md_card)
+
+            width = width + md_card.width
+
+        self.ids.box_layout.width = width
+
+    def convert_card_name(self, name):
+        return "images/" + name.casefold().replace(" ", "_") + ".png"
 
 
 class PlayerSpot(MDBoxLayout):
