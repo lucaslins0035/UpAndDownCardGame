@@ -405,16 +405,30 @@ class PlayingCard(MDCard):
         return super(PlayingCard, self).on_touch_down(touch)
 
     def on_pressed(self, instance, pos):
-        print('double pressed at {pos}'.format(pos=pos))
+        global game_client
         if game_client.game_status.player_data[game_client.name]['playing'] and \
                 game_client.player_status.card_played is None and \
                 game_client.game_status.state == PLAYING:
-            print("Choosing card: " + instance.card.name)
-            game_client.player_status.card_played = instance.card
+
+            if self.check_valid_card(instance.card.suit):
+                game_client.player_status.card_played = instance.card
+            else:
+                print("Please play {}".format(
+                    game_client.game_status.current_round_suit))
 
     def on_double_pressed(self, instance, pos):
-        print('pressed at {pos}'.format(pos=pos))
-        print(instance.card.name)
+        print('on_double_pressed at {pos}'.format(pos=pos))
+
+    def check_valid_card(self, played_suit):
+        if game_client.game_status.current_round_suit is None:
+            return True
+        elif played_suit == game_client.game_status.current_round_suit:
+            return True
+        elif not any(card.suit == game_client.game_status.current_round_suit
+                 for card in game_client.game_status.player_data[game_client.name]['current_hand']):
+            return True
+        
+        return False
 
 
 class PlayerHand(MDScrollView):
