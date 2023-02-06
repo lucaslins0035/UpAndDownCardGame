@@ -235,6 +235,7 @@ class GamePlay(MDScreen):
 
 class Betting(MDScreen):
     drop_down = DropDown()
+    current_round = NumericProperty(0)
 
     def on_pre_enter(self, *args):
         super().on_pre_enter(*args)
@@ -243,6 +244,8 @@ class Betting(MDScreen):
         self.ids.player_hand.setup_player_hand()
 
         global game_client
+
+        self.current_round = game_client.game_status.round_num
 
         # Create betting list
         self.ids.betting_list.clear_widgets()
@@ -337,6 +340,9 @@ class Table(MDAnchorLayout):
         global game_client
         num_players = len(game_client.game_status.players_list)
 
+        self.ids.suit.text = "[b]SUIT: {}[/b]".format(
+            game_client.game_status.current_round_suit)
+
         # Write player names
         for i in range(num_players):
             name = game_client.game_status.players_list[i]
@@ -347,6 +353,8 @@ class Table(MDAnchorLayout):
                      str(i+1)].bet = curr_bet if curr_bet is not None else -1
             self.ids["player" +
                      str(i+1)].current_score = game_client.game_status.player_data[name]['current_score']
+            self.ids["player" +
+                     str(i+1)].total_score = game_client.game_status.player_data[name]['total_score']
             self.ids["player" +
                      str(i+1)].card = get_card_img_path(game_client.game_status.player_data[name]['card_played'])
 
@@ -428,15 +436,13 @@ class PlayerHand(MDScrollView):
 
         self.ids.box_layout.width = width
 
-    # TODO create update player hand
-
 
 class PlayerSpot(MDBoxLayout):
     name = StringProperty("Player")
     bet = NumericProperty(0)
     current_score = NumericProperty(0)
+    total_score = NumericProperty(0)
     card = StringProperty("images/empty_card.png")
-    # TODO method change card
 
 ########################################################################
 #   GENERAL FUNCTIONS

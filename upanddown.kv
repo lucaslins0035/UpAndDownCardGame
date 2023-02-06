@@ -138,6 +138,22 @@
             id: top_win_menu
             size_hint: 1, None
             height: dp(70)
+        MDLabel:
+            id: round_text
+            text: "ROUND "
+            font_style: "H4"
+            size_hint: None, None
+            size: self.texture_size
+            text_size: None, None
+            pos_hint: {'center_x': 0.5, "center_y": 0.5}
+        MDLabel:
+            id: turn_text
+            text: "Your turn"
+            font_style: "Subtitle1"
+            size_hint: None, None
+            size: self.texture_size
+            text_size: None, None
+            pos_hint: {'center_x': 0.5, "center_y": 0.5}            
         Table:
             id: table
         PlayerHand:
@@ -156,6 +172,13 @@
             id: top_win_menu
             size_hint: 1, None
             height: dp(70)
+        MDLabel:
+            text: "ROUND " + str(root.current_round)
+            font_style: "H4"
+            size_hint: None, None
+            size: self.texture_size
+            text_size: None, None
+            pos_hint: {'center_x': 0.5, "center_y": 0.5}
         MDAnchorLayout:
             MDCard:
                 md_bg_color: 100/255, 100/255, 100/255, 1
@@ -280,6 +303,10 @@
             id: player3
             size_hint: card_size_hint
             pos_hint: {'right': 1.0, 'top': 1.0}
+        MDLabel:
+            id: suit
+            markup: True
+            pos_hint: {'center_x': 0.95, 'center_y': 0.32}
 
 <TopWindowMenu>:
     orientation: "horizontal"
@@ -315,7 +342,7 @@
     MDLabel:
         font_style: "Subtitle1"
         markup: True
-        text: "[b]{} | {}[/b]".format(root.current_score, root.bet if root.bet != -1 else "" )
+        text: "[b]{}/{} | {}[/b]".format(root.current_score, root.bet if root.bet != -1 else "", root.total_score)
         size_hint: None, None
         size: self.texture_size
         text_size: None, None
