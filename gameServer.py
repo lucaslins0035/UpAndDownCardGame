@@ -158,10 +158,10 @@ class GameServer():
                         message.read_msg.card_played.name)
 
                     # If the player is the first player
-                    if self.game_status.players_list[self.game_manager.init_player_index] == message.read_msg.card_played.name:
+                    if self.game_status.players_list[self.game_manager.init_player_index] == message.read_msg.name:
                         self.game_manager.dealer.update_card_rank(
                             message.read_msg.card_played.suit, self.game_manager.current_wild_card.suit)
-                        self.game_status.current_round_suit = message.read_msg.card_played.suit
+                        self.game_status.current_round_suit = message.read_msg.card_played.suit 
 
                     self.game_manager.pass_turn()
 
