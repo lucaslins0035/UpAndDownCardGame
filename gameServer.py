@@ -178,6 +178,7 @@ class GameServer():
                             if self.game_manager.current_round == 0:
                                 self.game_status.state == FINISHED
                                 print("FINISHED GAME!!")
+                                self.close_server = True
                             else:
                                 self.game_status.state = RESET_ROUND
                         else:

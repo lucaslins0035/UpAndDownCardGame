@@ -79,18 +79,7 @@ class GameClient():
         if self.game_status.state == LOBBY:
             pass  # TODO evaluate this
         elif self.game_status.state in [PLAYING, BETTING]:
-            if time.time() > self.start_time + 2:
-                print("Playing: {}".format(
-                    str(self.game_status.player_data[self.name]['playing'])))
-                print("Card: {}".format(
-                    str(self.game_status.player_data[self.name]['card_played'])))
-                print("Curr bet: {}".format(
-                    str(self.game_status.player_data[self.name]['current_bet'])))
-                print("Curr score: {}".format(
-                    str(self.game_status.player_data[self.name]['current_score'])))
-                print("Total score: {}".format(
-                    str(self.game_status.player_data[self.name]['total_score'])), "\n")
-                self.start_time = time.time()
+            pass
         elif self.game_status.state == RESET_IN_ROUND:
             self.player_status.reset_in_round_data()
         elif self.game_status.state == RESET_ROUND:
