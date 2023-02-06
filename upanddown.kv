@@ -252,8 +252,8 @@
                 pos_hint: {'center_x': 0.5,'center_y': 0.0}
             MDAnchorLayout:
                 Image:
+                    id: wild_card_img
                     md_bg_color: 0/255, 170/255, 0/255, 1
-                    source: "images/2_of_clubs.png"
                     allow_stretch: False
                     size_hint: 0.75, 1.0
         PlayerSpot:
@@ -315,7 +315,7 @@
     MDLabel:
         font_style: "Subtitle1"
         markup: True
-        text: "[b]{} | {}[/b]".format(root.current_score, root.bet)
+        text: "[b]{} | {}[/b]".format(root.current_score, root.bet if root.bet != -1 else "" )
         size_hint: None, None
         size: self.texture_size
         text_size: None, None

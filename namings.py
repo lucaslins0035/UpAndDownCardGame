@@ -2,7 +2,9 @@
 LOBBY = 1
 BETTING = 2
 PLAYING = 3
-WAITING = 4
+RESET_IN_ROUND = 4
+RESET_ROUND = 5
+FINISHED = 6
 
 # Network types
 HOST = 1

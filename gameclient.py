@@ -22,6 +22,7 @@ class GameClient():
         self.player_status = PlayerStatus()
         self.game_status = GameStatus()
         self.type = None
+        self.start_time = time.time()
 
     def run(self):
         self.player_status.name = self.name
@@ -73,11 +74,24 @@ class GameClient():
         self.name = name
 
     def update_status(self, message):
-        # TODO: Evaluate need to ad if statements here
-        if self.game_status.state == LOBBY:
-            self.game_status = message.read_msg
+        self.game_status = message.read_msg
 
-        elif self.game_status.state == BETTING:
-            self.game_status = message.read_msg
-        else:
-            print("Client: Start playing!!")
+        if self.game_status.state == LOBBY:
+            pass  # TODO evaluate this
+        elif self.game_status.state in [PLAYING, BETTING]:
+            if time.time() > self.start_time + 2:
+                print("Playing: {}".format(
+                    str(self.game_status.player_data[self.name]['playing'])))
+                print("Card: {}".format(
+                    str(self.game_status.player_data[self.name]['card_played'])))
+                print("Curr bet: {}".format(
+                    str(self.game_status.player_data[self.name]['current_bet'])))
+                print("Curr score: {}".format(
+                    str(self.game_status.player_data[self.name]['current_score'])))
+                print("Total score: {}".format(
+                    str(self.game_status.player_data[self.name]['total_score'])), "\n")
+                self.start_time = time.time()
+        elif self.game_status.state == RESET_IN_ROUND:
+            self.player_status.reset_in_round_data()
+        elif self.game_status.state == RESET_ROUND:
+            self.player_status.reset_round_data()

@@ -10,6 +10,13 @@ class PlayerStatus():
         self.card_played = None
         self.playing = False
 
+    def reset_round_data(self):
+        self.card_played = None
+        self.current_bet = None
+
+    def reset_in_round_data(self):
+        self.card_played = None
+
 
 class GameStatus():
     def __init__(self):
@@ -36,6 +43,28 @@ class GameStatus():
         self.state = BETTING
         self.screen = "betting"
         self.current_wild_card = None
+        self.current_round_suit = None
+
+    def reset_round_data(self, current_round):
+        for name in self.players_list:
+            self.player_data[name]['current_score'] = 0
+            self.player_data[name]['current_bet'] = None
+            self.player_data[name]['card_played'] = None
+            self.player_data[name]['playing'] = False
+            self.player_data[name]['current_hand'] = Stack()
+
+        self.round_num = current_round
+        self.state = BETTING
+        self.screen = "betting"
+        self.current_wild_card = None
+        self.current_round_suit = None
+
+    def reset_in_round_data(self):
+        for name in self.players_list:
+            self.player_data[name]['card_played'] = None
+            self.player_data[name]['playing'] = False
+
+        self.current_round_suit = None
 
     def update_player_data(self, hands, current_player, playing_order):
         for player in self.players_list:

@@ -5,7 +5,7 @@ from kivy.config import Config  # noqa
 Config.set('graphics', 'width', '498')  # noqa
 Config.set('graphics', 'height', '1080')  # noqa
 
-from kivy.properties import StringProperty, Clock, NumericProperty, ObjectProperty
+from kivy.properties import StringProperty, Clock, NumericProperty, ListProperty, ObjectProperty
 from kivy.metrics import dp
 from kivy.uix.button import Button
 from kivy.uix.dropdown import DropDown
@@ -205,7 +205,10 @@ class GamePlay(MDScreen):
         super().on_pre_enter(*args)
         self.ids.top_win_menu.set_menu()
         self.ids.table.update_table_view()
-        self.ids.player_hand.update_player_hand()
+        self.ids.player_hand.setup_player_hand()
+
+        self.ids.table.wild_card_src = get_card_img_path(
+            game_client.game_status.current_wild_card)
 
     def on_enter(self, *args):
         super().on_enter(*args)
@@ -218,11 +221,16 @@ class GamePlay(MDScreen):
         super().on_leave(*args)
         self.check_server_life_event.cancel()
         self.update_gameplay_screen_event.cancel()
-        
+
     def update_gameplay_screen(self):
+        global game_client
+
         self.ids.table.update_table_view()
-        self.ids.player_hand.update_player_hand()
-        
+        self.ids.player_hand.setup_player_hand()
+
+        # Check start round
+        if game_client.game_status.state != PLAYING:
+            self.manager.current = game_client.game_status.screen
 
 
 class Betting(MDScreen):
@@ -232,11 +240,12 @@ class Betting(MDScreen):
         super().on_pre_enter(*args)
         # Setup sub screens
         self.ids.top_win_menu.set_menu()
-        self.ids.player_hand.update_player_hand()
+        self.ids.player_hand.setup_player_hand()
 
         global game_client
 
         # Create betting list
+        self.ids.betting_list.clear_widgets()
         for i in game_client.game_status.playing_order:
             list_item = OneLineListItem(id=game_client.game_status.players_list[i],
                                         text=game_client.game_status.players_list[i] + ": ...")
@@ -251,13 +260,14 @@ class Betting(MDScreen):
             btn.bind(on_release=lambda btn: self.drop_down.select(int(btn.text)))
             self.drop_down.add_widget(btn)
 
+        self.ids.drop_down_btn.text = "Choose your bet"
         self.ids.drop_down_btn.bind(on_release=self.drop_down.open)
         self.drop_down.bind(on_select=lambda instance, x: setattr(
             self.ids.drop_down_btn, "text", str(x)))
         self.ids.confirm_btn.bind(on_release=self.on_confirm_btn)
 
         self.ids.wild_card_img.source = get_card_img_path(
-            game_client.game_status.current_wild_card[0].name)
+            game_client.game_status.current_wild_card)
 
     def on_enter(self, *args):
         super().on_enter(*args)
@@ -274,6 +284,7 @@ class Betting(MDScreen):
         self.update_betting_screen_event.cancel()
 
     def on_confirm_btn(self, instance):
+        print("Writing current bet")
         game_client.player_status.current_bet = int(
             self.ids.drop_down_btn.text)
 
@@ -317,14 +328,28 @@ class ExitGamePopup(Popup):
 
 
 class Table(MDAnchorLayout):
+    wild_card_src = StringProperty("images/empty_card.png")
+
+    def on_wild_card_src(self, instance, value):
+        self.ids.wild_card_img.source = value
+
     def update_table_view(self):
         global game_client
         num_players = len(game_client.game_status.players_list)
 
         # Write player names
         for i in range(num_players):
+            name = game_client.game_status.players_list[i]
             self.ids["player" +
-                     str(i+1)].name = game_client.game_status.players_list[i]
+                     str(i+1)].name = name
+            curr_bet = game_client.game_status.player_data[name]['current_bet']
+            self.ids["player" +
+                     str(i+1)].bet = curr_bet if curr_bet is not None else -1
+            self.ids["player" +
+                     str(i+1)].current_score = game_client.game_status.player_data[name]['current_score']
+            self.ids["player" +
+                     str(i+1)].card = get_card_img_path(game_client.game_status.player_data[name]['card_played'])
+
         for i in range(num_players, 10):
             self.ids["player" +
                      str(i+1)].name = "..."
@@ -355,15 +380,46 @@ class TopWindowMenu(MDRelativeLayout):
         self.exit_popup.dismiss()
 
 
+class PlayingCard(MDCard):
+
+    card = ObjectProperty(None)
+    pressed = ListProperty([0, 0])
+    double_pressed = ListProperty([0, 0])
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            if touch.is_double_tap:
+                self.double_pressed = touch.pos
+            else:
+                self.pressed = touch.pos
+
+            return True
+        return super(PlayingCard, self).on_touch_down(touch)
+
+    def on_pressed(self, instance, pos):
+        print('double pressed at {pos}'.format(pos=pos))
+        if game_client.game_status.player_data[game_client.name]['playing'] and \
+                game_client.player_status.card_played is None and \
+                game_client.game_status.state == PLAYING:
+            print("Choosing card: " + instance.card.name)
+            game_client.player_status.card_played = instance.card
+
+    def on_double_pressed(self, instance, pos):
+        print('pressed at {pos}'.format(pos=pos))
+        print(instance.card.name)
+
+
 class PlayerHand(MDScrollView):
-    def update_player_hand(self):
+    def setup_player_hand(self):
+        self.ids.box_layout.clear_widgets()
         width = 0
         for card in game_client.game_status.player_data[game_client.name]["current_hand"]:
             md_card_anchorl = MDAnchorLayout()
-            card_img = Image(source=get_card_img_path(card.name))
+            card_img = Image(source=get_card_img_path(card))
             md_card_anchorl.add_widget(card_img)
 
-            md_card = MDCard(size_hint=(1, 1), md_bg_color=(0, 0, 0, 0))
+            md_card = PlayingCard(size_hint=(
+                1, 1), md_bg_color=(0, 0, 0, 0), card=card)
             md_card.add_widget(md_card_anchorl)
 
             self.ids.box_layout.add_widget(md_card)
@@ -371,6 +427,8 @@ class PlayerHand(MDScrollView):
             width = width + md_card.width
 
         self.ids.box_layout.width = width
+
+    # TODO create update player hand
 
 
 class PlayerSpot(MDBoxLayout):
@@ -397,8 +455,10 @@ def check_server_life(screen):
         screen.manager.current = 'play_menu'
 
 
-def get_card_img_path(name):
-    return "images/" + name.casefold().replace(" ", "_") + ".png"
+def get_card_img_path(card):
+    if card is None:
+        return "images/empty_card.png"
+    return "images/" + card.name.casefold().replace(" ", "_") + ".png"
 
 ########################################################################
 #   APP

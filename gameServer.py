@@ -96,6 +96,15 @@ class GameServer():
         self.players_reg.pop(addr)
         self.game_status.update_list(self.players_reg)
 
+    def compute_scores(self, winner, round_finished):
+        self.game_status.player_data[winner]["current_score"] += 1
+        if round_finished:
+            for player in self.game_status.player_data.keys():
+                curr_score = self.game_status.player_data[player]["current_score"]
+                curr_bet = self.game_status.player_data[player]["current_bet"]
+                self.game_status.player_data[player]["total_score"] += curr_score + \
+                    3 if curr_score == curr_bet else 0
+
     def update_status(self, message):
         if self.game_status.state == LOBBY:
             if str(message.addr) not in self.players_reg.keys():
@@ -128,10 +137,89 @@ class GameServer():
                     if self.game_manager.current_playing_index is None:  # If there is no one left to bet
                         self.game_status.state = PLAYING
                         self.game_status.screen = "game_play"
+                        self.game_manager.pass_turn()
+                        self.game_status.update_player_data(
+                            self.game_manager.current_hands,
+                            self.game_manager.current_playing_index,
+                            self.game_manager.current_playing_order)
                     else:
                         self.game_status.update_player_data(
                             self.game_manager.current_hands,
                             self.game_manager.current_playing_index,
                             self.game_manager.current_playing_order)
-        else:
-            print("not implemented yet")
+
+        elif self.game_status.state == PLAYING:
+            if self.game_status.player_data[message.read_msg.name]["playing"]:
+                if message.read_msg.card_played is not None:
+                    # Record played card
+                    self.game_status.player_data[message.read_msg.name]["card_played"] = message.read_msg.card_played
+                    # Remove this card from the hand stack
+                    self.game_manager.current_hands[message.read_msg.name].get(
+                        message.read_msg.card_played.name)
+
+                    # If the player is the first player
+                    if self.game_status.players_list[self.game_manager.init_player_index] == message.read_msg.card_played.name:
+                        self.game_manager.dealer.update_card_rank(
+                            message.read_msg.card_played.suit, self.game_manager.current_wild_card.suit)
+                        self.game_status.current_round_suit = message.read_msg.card_played.suit
+
+                    self.game_manager.pass_turn()
+
+                    if self.game_manager.current_playing_index is None:  # If there is no one left to play
+                        cards_dict = {name: data["card_played"]
+                                      for name, data in self.game_status.player_data.items()}
+                        winner = self.game_manager.get_partial_winner(
+                            cards_dict)  # Find the winner of the round
+                        current_round_finished = self.game_manager.finish_round()
+                        self.compute_scores(winner, current_round_finished)
+
+                        if current_round_finished:
+                            self.game_manager.setup_next_round()
+                            if self.game_manager.current_round == 0:
+                                self.game_status.state == FINISHED
+                                print("FINISHED GAME!!")
+                            else:
+                                self.game_status.state = RESET_ROUND
+                        else:
+                            self.game_status.state = RESET_IN_ROUND
+                    else:
+                        self.game_status.update_player_data(
+                            self.game_manager.current_hands,
+                            self.game_manager.current_playing_index,
+                            self.game_manager.current_playing_order)
+
+        elif self.game_status.state == RESET_IN_ROUND:
+            self.game_status.player_data[message.read_msg.name]["card_played"] = message.read_msg.card_played
+
+            cards_played = [self.game_status.player_data[player]["card_played"]
+                            for player in self.game_status.players_list]
+
+            if all(card is None for card in cards_played):
+                self.game_status.state = PLAYING
+                self.game_status.reset_in_round_data()
+                self.game_manager.pass_turn()
+                self.game_status.update_player_data(
+                    self.game_manager.current_hands,
+                    self.game_manager.current_playing_index,
+                    self.game_manager.current_playing_order)
+
+        elif self.game_status.state == RESET_ROUND:
+            self.game_status.player_data[message.read_msg.name]["card_played"] = message.read_msg.card_played
+            self.game_status.player_data[message.read_msg.name]["current_bet"] = message.read_msg.current_bet
+
+            cards_played = [self.game_status.player_data[player]["card_played"]
+                            for player in self.game_status.players_list]
+
+            current_bets = [self.game_status.player_data[player]["current_bet"]
+                            for player in self.game_status.players_list]
+
+            if all(card is None for card in cards_played) and \
+                    all(bet is None for bet in current_bets):
+                self.game_status.state = PLAYING
+                self.game_status.reset_round_data(
+                    self.game_manager.current_round)
+                self.game_status.current_wild_card = self.game_manager.current_wild_card
+                self.game_status.update_player_data(
+                    self.game_manager.current_hands,
+                    self.game_manager.current_playing_index,
+                    self.game_manager.current_playing_order)
