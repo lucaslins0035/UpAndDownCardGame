@@ -135,8 +135,8 @@ class GameServer():
                     self.game_status.player_data[message.read_msg.name]["current_bet"] = message.read_msg.current_bet
                     self.game_manager.pass_turn()
                     if self.game_manager.current_playing_index is None:  # If there is no one left to bet
-                        self.game_status.state = PLAYING
-                        self.game_status.screen = "game_play"
+                        self.transition_time = time.time()
+                        self.game_status.state = TO_PLAYING
                         self.game_manager.pass_turn()
                         self.game_status.update_player_data(
                             self.game_manager.current_hands,
@@ -224,3 +224,9 @@ class GameServer():
                     self.game_manager.current_hands,
                     self.game_manager.current_playing_index,
                     self.game_manager.current_playing_order)
+        
+        elif self.game_status.state == TO_PLAYING:
+            if time.time() > self.transition_time + TRANSITION_DELAY:
+                self.game_status.state = PLAYING
+                self.game_status.screen = "game_play"
+            

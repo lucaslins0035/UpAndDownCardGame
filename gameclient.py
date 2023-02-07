@@ -22,7 +22,7 @@ class GameClient():
         self.player_status = PlayerStatus()
         self.game_status = GameStatus()
         self.type = None
-        self.start_time = time.time()
+        self.transition_time = time.time()
 
     def run(self):
         self.player_status.name = self.name
@@ -79,8 +79,10 @@ class GameClient():
         if self.game_status.state == LOBBY:
             pass  # TODO evaluate this
         elif self.game_status.state in [PLAYING, BETTING]:
-            pass
+            self.transition_time = time.time()
         elif self.game_status.state == RESET_IN_ROUND:
-            self.player_status.reset_in_round_data()
+            if time.time() > self.transition_time + TRANSITION_DELAY:
+                self.player_status.reset_in_round_data()
         elif self.game_status.state == RESET_ROUND:
-            self.player_status.reset_round_data()
+            if time.time() > self.transition_time + TRANSITION_DELAY:
+                self.player_status.reset_round_data()
