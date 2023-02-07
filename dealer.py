@@ -34,12 +34,18 @@ class Dealer():
         }
 
     def update_card_rank(self, init, wild):
+        #TODO sort cards at hand
         aux = 2
+        if init is None:
+            aux = 3
         for suit in self.UD_RANK['suits'].keys():
             if suit == wild:
                 self.UD_RANK['suits'][suit] = 4
             elif suit == init:
                 self.UD_RANK['suits'][suit] = 3
+            elif init is None:
+                self.UD_RANK['suits'][suit] = aux
+                aux = aux-1
             else:
                 self.UD_RANK['suits'][suit] = aux
                 aux = aux-1
@@ -85,5 +91,10 @@ class Dealer():
                 hands[p].add(self.deck.deal(1))
 
         self.wild_card = self.deck.deal(1)
+
+        self.update_card_rank(None, self.wild_card[0].suit)
+
+        for i in range(len(hands)):
+            hands[i] = self.sort_cards(hands[i])
 
         return tuple(hands), self.wild_card[0]
