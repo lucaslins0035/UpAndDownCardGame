@@ -225,12 +225,13 @@ class GamePlay(MDScreen):
     def update_gameplay_screen(self):
         global game_client
 
-        self.ids.table.update_table_view()
         self.ids.player_hand.setup_player_hand()
-
         # Check start round
         if game_client.game_status.state != PLAYING:
+            self.ids.table.update_partial_table_view()
             self.manager.current = game_client.game_status.screen
+        else:
+            self.ids.table.update_table_view()
 
 
 class Betting(MDScreen):
@@ -292,18 +293,7 @@ class Betting(MDScreen):
             self.ids.drop_down_btn.text)
 
     def update_betting_screen(self):
-        # Update betting list
-        for player_index in game_client.game_status.playing_order:
-            name = game_client.game_status.players_list[player_index]
-            current_bet = game_client.game_status.player_data[name]["current_bet"]
-            bet_str = str(current_bet) if current_bet is not None else "..."
-            self.ids[name].text = name + \
-                ": " + bet_str
-
-            if game_client.game_status.player_data[name]['playing']:
-                self.ids[name].bg_color = (1, 1, 1, 1)
-            else:
-                self.ids[name].bg_color = (1, 1, 1, 0)
+        global game_client
 
         # Update button status
         if game_client.game_status.player_data[game_client.name]['playing'] and game_client.player_status.current_bet is None:
@@ -318,7 +308,32 @@ class Betting(MDScreen):
 
         # Check start round
         if game_client.game_status.state != BETTING:
+            # Update betting list
+            for player_index in game_client.game_status.playing_order:
+                name = game_client.game_status.players_list[player_index]
+                current_bet = game_client.game_status.player_data[name]["current_bet"]
+                bet_str = str(
+                    current_bet) if current_bet is not None else "..."
+                self.ids[name].text = name + \
+                    ": " + bet_str
+                self.ids[name].bg_color = (1, 1, 1, 0)
+
             self.manager.current = game_client.game_status.screen
+
+        else:
+            # Update betting list
+            for player_index in game_client.game_status.playing_order:
+                name = game_client.game_status.players_list[player_index]
+                current_bet = game_client.game_status.player_data[name]["current_bet"]
+                bet_str = str(
+                    current_bet) if current_bet is not None else "..."
+                self.ids[name].text = name + \
+                    ": " + bet_str
+
+                if game_client.game_status.player_data[name]['playing']:
+                    self.ids[name].bg_color = (1, 1, 1, 1)
+                else:
+                    self.ids[name].bg_color = (1, 1, 1, 0)
 
 
 ########################################################################
@@ -357,6 +372,32 @@ class Table(MDAnchorLayout):
                      str(i+1)].total_score = game_client.game_status.player_data[name]['total_score']
             self.ids["player" +
                      str(i+1)].card = get_card_img_path(game_client.game_status.player_data[name]['card_played'])
+
+        for i in range(num_players, 10):
+            self.ids["player" +
+                     str(i+1)].name = "..."
+
+    def update_partial_table_view(self):
+        global game_client
+        num_players = len(game_client.game_status.players_list)
+
+        # Write player names
+        for i in range(num_players):
+            name = game_client.game_status.players_list[i]
+            self.ids["player" +
+                     str(i+1)].name = name
+            curr_bet = game_client.game_status.player_data[name]['current_bet']
+            self.ids["player" +
+                     str(i+1)].bet = curr_bet if curr_bet is not None else -1
+            self.ids["player" +
+                     str(i+1)].current_score = game_client.game_status.player_data[name]['current_score']
+            self.ids["player" +
+                     str(i+1)].total_score = game_client.game_status.player_data[name]['total_score']
+
+            if self.ids["player" + str(i+1)].card == "images/empty_card.png":
+                self.ids["player" +
+                         str(i+1)].card = get_card_img_path(
+                             game_client.game_status.player_data[name]['card_played'])
 
         for i in range(num_players, 10):
             self.ids["player" +
@@ -425,9 +466,9 @@ class PlayingCard(MDCard):
         elif played_suit == game_client.game_status.current_round_suit:
             return True
         elif not any(card.suit == game_client.game_status.current_round_suit
-                 for card in game_client.game_status.player_data[game_client.name]['current_hand']):
+                     for card in game_client.game_status.player_data[game_client.name]['current_hand']):
             return True
-        
+
         return False
 
 
