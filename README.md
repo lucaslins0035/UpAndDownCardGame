@@ -1,5 +1,6 @@
 # UpAndDownCardGame
-A multiplayer card game developed with Kivy.
+:spades: :hearts: :clubs: :diamonds:
+A multiplayer card game developed with Kivy. :iphone:
 
 ## TODO
 
